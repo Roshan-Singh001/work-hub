@@ -5,6 +5,8 @@ import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 
+import Link from "next/link"
+
 import { Card, CardContent } from "@/components/ui/card"
 import {
     Select,
@@ -30,56 +32,51 @@ import {
 
 // Roles
 const ROLES = [
-    { value: "orgs",       label: "Organization", icon: Building2, description: "Scale teams" },
-    { value: "client",     label: "Client",        icon: User,      description: "Hire talent" },
-    { value: "freelancer", label: "Freelancer",    icon: Briefcase, description: "Find work"  },
+    { value: "orgs", label: "Organization", icon: Building2, description: "Scale teams" },
+    { value: "client", label: "Client", icon: User, description: "Hire talent" },
+    { value: "freelancer", label: "Freelancer", icon: Briefcase, description: "Find work" },
 ]
 
 // Zod Schemas
 
 const accountSchema = {
-    email:    z.email("Enter a valid email address"),
+    email: z.email("Enter a valid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
 }
 
 const clientSchema = z.object({
-    firstName:    z.string().min(1, "First name is required"),
-    lastName:     z.string().min(1, "Last name is required"),
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
     organization: z.string().optional(),
-    country:      z.string().min(1, "Please select a country"),
-    phone:        z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid international phone number"),
+    country: z.string().min(1, "Please select a country"),
+    phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid international phone number"),
     ...accountSchema,
 })
 
 const freelancerSchema = z.object({
-    firstName:         z.string().min(1, "First name is required"),
-    lastName:          z.string().min(1, "Last name is required"),
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
     professionalTitle: z.string().min(2, "Enter your professional title"),
-    country:           z.string().min(1, "Please select a country"),
-    phone:             z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid international phone number"),
-    skillCategory:     z.string().min(1, "Please select a skill category"),
-    about:             z.string().min(20, "Please write at least 20 characters"),
+    country: z.string().min(1, "Please select a country"),
+    phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid international phone number"),
+    skillCategory: z.string().min(1, "Please select a skill category"),
+    about: z.string().min(20, "Please write at least 20 characters"),
     ...accountSchema,
 })
 
 const orgsSchema = z.object({
-    orgName:     z.string().min(2, "Organization name is required"),
-    industry:    z.string().min(1, "Please select an industry"),
+    orgName: z.string().min(2, "Organization name is required"),
+    industry: z.string().min(1, "Please select an industry"),
     companySize: z.number().min(1, "Please select company size"),
-    country:     z.string().min(1, "Please select a country"),
-    phone:       z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid international phone number"),
-    website:     z.string().optional(),
-    about:       z.string().min(20, "Please write at least 20 characters"),
-    firstName:   z.string().min(1, "First name is required"),
-    lastName:    z.string().min(1, "Last name is required"),
+    country: z.string().min(1, "Please select a country"),
+    phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid international phone number"),
+    website: z.string().optional(),
+    about: z.string().min(20, "Please write at least 20 characters"),
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
     ...accountSchema,
 })
 
-const schemaMap = {
-    client:     clientSchema,
-    freelancer: freelancerSchema,
-    orgs:       orgsSchema,
-}
 
 function SectionDivider({ label }) {
     return (
@@ -129,38 +126,27 @@ function UploadZone({ label, onChange }) {
     )
 }
 
-function AccountFields({ control }) {
+function AccountFields({ register, errors}) {
     return (
         <>
             <SectionDivider label="Account" />
+            <Field data-invalid={!!errors?.email}>
+                <FieldLabel htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                    <Mail className="w-3 h-3" /> Email Address
+                </FieldLabel>
+                <Input {...register("email")} id="email" type="email" placeholder="you@example.com" aria-invalid={!!errors.email} />
+                {errors?.email && <FieldError errors={[errors.email]} />}
+            </Field>
 
-            <Controller
-                name="email"
-                control={control}
-                render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                            <Mail className="w-3 h-3" /> Email Address
-                        </FieldLabel>
-                        <Input {...field} id="email" type="email" placeholder="you@example.com" aria-invalid={fieldState.invalid} />
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                    </Field>
-                )}
-            />
+            <Field data-invalid={!!errors?.password}>
+                <FieldLabel htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                    <Lock className="w-3 h-3" /> Password
+                </FieldLabel>
+                <Input {...register("password")} id="password" type="password" placeholder="Min. 8 characters" aria-invalid={!!errors.password} />
+                {errors?.password && <FieldError errors={[errors.password]} />}
+            </Field>
 
-            <Controller
-                name="password"
-                control={control}
-                render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                        <FieldLabel htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                            <Lock className="w-3 h-3" /> Password
-                        </FieldLabel>
-                        <Input {...field} id="password" type="password" placeholder="Min. 8 characters" aria-invalid={fieldState.invalid} />
-                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                    </Field>
-                )}
-            />
+            
         </>
     )
 }
@@ -168,13 +154,13 @@ function AccountFields({ control }) {
 // Client Form
 
 function Client({ onSuccess }) {
-    const { control, register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+    const { control, register, handleSubmit, formState: { errors, isSubmitting }, } = useForm({
         resolver: zodResolver(clientSchema),
     })
 
     async function onSubmit(data) {
         try {
-            const res = await fetch("/api/auth/register", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ role: "client", ...data }),
@@ -236,7 +222,7 @@ function Client({ onSuccess }) {
                 </Field>
             </div>
 
-            <AccountFields control={control} />
+            <AccountFields register={register} errors={errors} />
 
             <Button type="submit" disabled={isSubmitting} className="w-full mt-2 gap-2 h-11 font-semibold">
                 {isSubmitting ? "Creating account…" : <>Create Client Account <ArrowRight className="w-4 h-4" /></>}
@@ -261,9 +247,9 @@ function Freelancer({ onSuccess }) {
                 else formData.append(k, v ?? "")
             })
 
-            const res = await fetch("/api/auth/register", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
                 method: "POST",
-                body: formData, 
+                body: formData,
             })
             const json = await res.json()
             if (!res.ok) throw new Error(json.message || "Registration failed")
@@ -356,7 +342,7 @@ function Freelancer({ onSuccess }) {
 
             <UploadZone label="Portfolio / Resume / Certificate" onChange={(e) => setValue("portfolio", e.target.files)} />
 
-            <AccountFields control={control} />
+            <AccountFields register={register} errors={errors} />
 
             <Button type="submit" disabled={isSubmitting} className="w-full mt-2 gap-2 h-11 font-semibold">
                 {isSubmitting ? "Creating account…" : <>Create Freelancer Account <ArrowRight className="w-4 h-4" /></>}
@@ -381,7 +367,7 @@ function Orgs({ onSuccess }) {
                 else formData.append(k, v ?? "")
             })
 
-            const res = await fetch("/api/auth/register", {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
                 method: "POST",
                 body: formData,
             })
@@ -510,7 +496,7 @@ function Orgs({ onSuccess }) {
 
             <UploadZone label="Business Registration / License" onChange={(e) => setValue("license", e.target.files)} />
 
-            <AccountFields control={control} />
+            <AccountFields register={register} errors={errors} />
 
             <Button type="submit" disabled={isSubmitting} className="w-full mt-2 gap-2 h-11 font-semibold">
                 {isSubmitting ? "Creating account…" : <>Create Organization Account <ArrowRight className="w-4 h-4" /></>}
@@ -584,7 +570,7 @@ export default function Register() {
 
                         <p className="text-xs text-center text-muted-foreground pt-1">
                             Already have an account?{" "}
-                            <a href="/login" className="text-primary font-semibold hover:underline">Sign in</a>
+                            <Link href="/auth/login" className="text-primary font-semibold hover:underline">Sign in</Link>
                         </p>
                     </CardContent>
                 </Card>

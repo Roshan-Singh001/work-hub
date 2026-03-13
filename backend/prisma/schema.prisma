@@ -12,8 +12,8 @@ datasource db {
 
 enum ROLE {
   ORG_Owner
+  ORG_Member
   Admin
-  Employee
   Client
   Freelancer
 }
@@ -26,49 +26,62 @@ model User {
   password             String
   phone                String
   organizationId       String?
-  organization         Organization? @relation(fields: [organizationId], references: [org_id])
 
-  role                 ROLE      
+  role                 ROLE 
+  status               String  @default("pending")     
 
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
-  is_owns_org          Organization[] @relation("owns")
+  organization          Organization?
+  client                Client?
+  member                Org_member?
+  freelancer            Freelancer?
 }
 
 model Organization {
   org_id        String  @id @default(uuid())
   org_name      String
   ownerId   String  @unique
-  owner     User    @relation("owns",fields: [ownerId], references: [id])
-  password   String
+  owner     User    @relation(fields: [ownerId], references: [id])
 
   size       String
   country    String
   industry   String
   website    String?
+  license_url String
   org_phone      String?
   org_email      String?
   about      String
-
-  employee   User[]
 
   createdAt DateTime @default(now())
 }
 
 model Org_member {
   id String @id @default(uuid())
-  role String
+  memberId User @relation(fields: [id], references: [id])
+  organizationId String
+  local_role String
 
   createdAt DateTime @default(now())
 }
 
 model Client {
-  id String @id @default(uuid())
-  first_name String
-  last_name String
-  email String @unique
-  phone String @unique
-  org_name String?
+  client_id String @id @default(uuid())
+  user   User   @relation(fields: [client_id], references: [id])
 
+  org_name String?
+  country String
+  phone String
+}
+
+model Freelancer {
+  freelancer_id String @id @default(uuid())
+  user   User   @relation(fields: [freelancer_id], references: [id])
+
+  title String
+  about String
+  country String
+  skills_category String
+  resume_url String
 }

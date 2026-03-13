@@ -6,7 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
+import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
 import {
     Select,
@@ -67,13 +69,14 @@ const freelancerSchema = z.object({
 const orgsSchema = z.object({
     orgName: z.string().min(2, "Organization name is required"),
     industry: z.string().min(1, "Please select an industry"),
-    companySize: z.number().min(1, "Please select company size"),
+    companySize: z.string().min(1, "Please select company size"),
     country: z.string().min(1, "Please select a country"),
     phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid international phone number"),
     website: z.string().optional(),
     about: z.string().min(20, "Please write at least 20 characters"),
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
+    license: z.instanceof(File).refine(file => file.size > 0, "Business license is required"),
     ...accountSchema,
 })
 
@@ -110,9 +113,59 @@ function CountrySelect({ value, onChange, invalid }) {
     )
 }
 
-function UploadZone({ label, onChange }) {
+function UploadZone({ name,label, setValue, error }) {
+    const [file, setFile] = useState(null)
+    const [localError, setLocalError] = useState(null)
+    const MAX_SIZE = 10 * 1024 * 1024
+
+    const ALLOWED_TYPES = [
+        "application/pdf",
+        "image/png",
+        "image/jpeg"
+    ]
+
+
+    function validateFile(file) {
+        if (!ALLOWED_TYPES.includes(file.type)) {
+            return "Only PDF, PNG, JPG allowed"
+        }
+
+        if (file.size > MAX_SIZE) {
+            return "File must be under 10MB"
+        }
+
+        return null
+    }
+
+    function handleFile(file) {
+        const err = validateFile(file)
+
+        if (err) {
+            setLocalError(err)
+            return
+        }
+        console.log("Valid file selected: ", file)
+
+        setLocalError(null)
+        setFile(file)
+
+        // send to react-hook-form
+        setValue(name, file)
+    }
+
+    function onInputChange(e) {
+        const file = e.target.files?.[0]
+        if (file) handleFile(file)
+    }
+
+    function removeFile() {
+        setFile(null)
+        setValue(name, null)
+    }
+
+    console.log("UploadZone render: ", label)
     return (
-        <Field>
+        <Field data-invalid={!!error}>
             <FieldLabel className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                 <Upload className="w-3 h-3" /> {label}
             </FieldLabel>
@@ -120,13 +173,14 @@ function UploadZone({ label, onChange }) {
                 <Upload className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 <p className="text-xs text-muted-foreground">Click to upload or drag & drop</p>
                 <p className="text-[10px] text-muted-foreground/60">PDF, PNG, JPG — up to 10MB</p>
-                <input type="file" className="hidden" accept=".pdf,.png,.jpg,.jpeg" onChange={onChange} />
+                <input type="file" className="hidden" accept=".pdf,.png,.jpg,.jpeg" onChange={onInputChange} />
             </label>
+            {error && <FieldError errors={[error]} />}
         </Field>
     )
 }
 
-function AccountFields({ register, errors}) {
+function AccountFields({ register, errors }) {
     return (
         <>
             <SectionDivider label="Account" />
@@ -146,7 +200,7 @@ function AccountFields({ register, errors}) {
                 {errors?.password && <FieldError errors={[errors.password]} />}
             </Field>
 
-            
+
         </>
     )
 }
@@ -162,8 +216,11 @@ function Client({ onSuccess }) {
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ role: "client", ...data }),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                signal: AbortSignal.timeout(60000),
             })
             const json = await res.json()
             if (!res.ok) throw new Error(json.message || "Registration failed")
@@ -247,15 +304,23 @@ function Freelancer({ onSuccess }) {
                 else formData.append(k, v ?? "")
             })
 
+            console.log("Data: ", formData);
+
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
                 method: "POST",
                 body: formData,
+                signal: AbortSignal.timeout(60000),
             })
             const json = await res.json()
-            if (!res.ok) throw new Error(json.message || "Registration failed")
+            if (!res.ok) {
+                toast.error(json.message || "Registration failed")
+            } else {
+                toast.success(json.message);
+            }
             onSuccess?.(json)
         } catch (err) {
-            alert(err.message)
+            toast.error(json.message || "Registration failed")
+            console.error("Registration error: ", err);
         }
     }
 
@@ -340,7 +405,7 @@ function Freelancer({ onSuccess }) {
                 {errors.about && <FieldError errors={[errors.about]} />}
             </Field>
 
-            <UploadZone label="Portfolio / Resume / Certificate" onChange={(e) => setValue("portfolio", e.target.files)} />
+            <UploadZone label="Portfolio / Resume / Certificate" name="resume" setValue={setValue} error={errors.resume} />
 
             <AccountFields register={register} errors={errors} />
 
@@ -354,6 +419,7 @@ function Freelancer({ onSuccess }) {
 // Organization form
 
 function Orgs({ onSuccess }) {
+
     const { control, register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm({
         resolver: zodResolver(orgsSchema),
     })
@@ -367,15 +433,23 @@ function Orgs({ onSuccess }) {
                 else formData.append(k, v ?? "")
             })
 
+            console.log("Data: ", formData);
+
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
                 method: "POST",
                 body: formData,
+                signal: AbortSignal.timeout(60000),
             })
             const json = await res.json()
-            if (!res.ok) throw new Error(json.message || "Registration failed")
+            if (!res.ok) {
+                toast.error(json.message || "Registration failed")
+            } else {
+                toast.success(json.message);
+            }
             onSuccess?.(json)
         } catch (err) {
-            alert(err.message)
+            toast.error(json.message || "Registration failed")
+            console.error("Registration error: ", err);
         }
     }
 
@@ -494,7 +568,7 @@ function Orgs({ onSuccess }) {
                 </Field>
             </div>
 
-            <UploadZone label="Business Registration / License" onChange={(e) => setValue("license", e.target.files)} />
+            <UploadZone label="Business Registration / License" name="license" setValue={setValue} error={errors.license} />
 
             <AccountFields register={register} errors={errors} />
 
@@ -507,10 +581,12 @@ function Orgs({ onSuccess }) {
 
 export default function Register() {
     const [role, setRole] = useState("")
+    const router = useRouter();
 
     function handleSuccess(data) {
-        console.log("Registered:", data)
-        // e.g. router.push("/dashboard")
+        console.log("Registered:", data);
+        router.push("/auth/login");
+
     }
 
     return (

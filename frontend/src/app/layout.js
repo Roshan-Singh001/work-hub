@@ -1,5 +1,6 @@
 import { Poppins } from "next/font/google";
 import { ThemeProvider } from 'next-themes'
+import { Toaster } from "@/components/ui/sonner"
 import "./globals.css";
 
 const poppins = Poppins({
@@ -20,6 +21,7 @@ export default function RootLayout({ children }) {
         className={`${poppins.variable}  antialiased`}
       >
          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <Toaster position="top-center" />
 
           {children}
          </ThemeProvider>

@@ -1,13 +1,23 @@
 {
   "type": "module",
   "devDependencies": {
-    "prisma": "^6.19.2"
+    "prisma": "^7.4.2"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.2",
+    "@prisma/adapter-mariadb": "^7.4.2",
+    "@prisma/adapter-pg": "^7.4.2",
+    "@prisma/client": "^7.4.2",
+    "bcrypt": "^6.0.0",
+    "cloudinary": "^2.9.0",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
-    "mysql2": "^3.18.2"
+    "fs": "^0.0.1-security",
+    "jsonwebtoken": "^9.0.3",
+    "mariadb": "^3.5.1",
+    "multer": "^2.1.1",
+    "mysql2": "^3.18.2",
+    "pg": "^8.20.0",
+    "uuid": "^13.0.0"
   }
 }

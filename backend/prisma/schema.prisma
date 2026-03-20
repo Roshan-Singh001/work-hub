@@ -18,6 +18,16 @@ enum ROLE {
   Freelancer
 }
 
+model Admin {
+  id String @id @default(uuid())
+  name String
+  email String @unique
+  password String
+  phone String
+
+  createdAt DateTime @default(now())
+}
+
 model User {
   id                   String   @id @default(uuid())
   first_name           String
@@ -72,7 +82,7 @@ model Client {
 
   org_name String?
   country String
-  phone String
+  phone String 
 }
 
 model Freelancer {

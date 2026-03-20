@@ -1,5 +1,6 @@
 import { Poppins } from "next/font/google";
 import { ThemeProvider } from 'next-themes'
+import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/sonner"
 import "./globals.css";
 
@@ -23,7 +24,9 @@ export default function RootLayout({ children }) {
          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <Toaster position="top-center" />
 
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
          </ThemeProvider>
       </body>
     </html>

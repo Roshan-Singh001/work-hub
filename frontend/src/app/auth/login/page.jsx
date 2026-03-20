@@ -5,13 +5,14 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 import {
     Building2, User, Briefcase, ArrowRight,
     Upload, Globe, Phone, Mail, Lock, FileText, ShieldUser,
 } from "lucide-react"
 
-
+import { toast } from "sonner"
 import {
     Field,
     FieldError,
@@ -24,10 +25,10 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
 const ROLES = [
-    { value: "orgs", label: "Organization", icon: Building2 },
-    { value: "client", label: "Client", icon: User },
-    { value: "freelancer", label: "Freelancer", icon: Briefcase },
-    { value: "admin", label: "Admin", icon: ShieldUser },
+    { value: "Orgs", label: "Organization", icon: Building2 },
+    { value: "Client", label: "Client", icon: User },
+    { value: "Freelancer", label: "Freelancer", icon: Briefcase },
+    { value: "Admin", label: "Admin", icon: ShieldUser },
 ]
 
 const accountSchema = z.object({
@@ -37,6 +38,7 @@ const accountSchema = z.object({
 
 export default function Login() {
     const [role, setRole] = useState("");
+    const router = useRouter();
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
         resolver: zodResolver(accountSchema),
     })
@@ -48,19 +50,37 @@ export default function Login() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ role: role, ...data }),
+                credentials: "include",
             })
             const json = await res.json()
             if (!res.ok) throw new Error(json.message || "Login failed")
-            onSuccess?.(json)
+            toast.success("Logged in Successfully");
+            handleSuccess(json)
         } catch (err) {
-            alert(err.message)
+            console.error("Login error:", err);
+            toast.error("Login failed: " + err.message);
         }
     }
 
 
     function handleSuccess(data) {
         console.log("Logged in:", data)
-        // e.g. router.push("/dashboard")
+        if(data.role === "Admin"){
+            console.log("Redirecting to admin dashboard");
+            router.push("/admin/dashboard");
+        }
+        else if(data.role === "ORG_Owner"){
+            router.push("/orgs/admin/dashboard");
+        }
+        else if(data.role === "ORG_Member"){
+            router.push("/orgs/member/dashboard");
+        }
+        else if(data.role === "Freelancer"){
+            router.push("/freelancer/dashboard");
+        }
+        else if(data.role === "Client"){
+            router.push("/client/dashboard");
+        }
     }
 
     return (

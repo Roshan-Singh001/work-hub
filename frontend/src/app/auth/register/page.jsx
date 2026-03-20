@@ -62,6 +62,7 @@ const freelancerSchema = z.object({
     country: z.string().min(1, "Please select a country"),
     phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid international phone number"),
     skillCategory: z.string().min(1, "Please select a skill category"),
+    resume: z.instanceof(File).refine(file => file.size > 0, "Resume is required"),
     about: z.string().min(20, "Please write at least 20 characters"),
     ...accountSchema,
 })
@@ -170,10 +171,16 @@ function UploadZone({ name,label, setValue, error }) {
                 <Upload className="w-3 h-3" /> {label}
             </FieldLabel>
             <label className="border-2 border-dashed border-muted-foreground/20 rounded-lg p-4 text-center hover:border-primary/40 hover:bg-muted/30 transition-all cursor-pointer group flex flex-col items-center gap-1.5">
-                <Upload className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                <p className="text-xs text-muted-foreground">Click to upload or drag & drop</p>
-                <p className="text-[10px] text-muted-foreground/60">PDF, PNG, JPG — up to 10MB</p>
-                <input type="file" className="hidden" accept=".pdf,.png,.jpg,.jpeg" onChange={onInputChange} />
+                {!file? <>
+                    <Upload className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                    <p className="text-xs text-muted-foreground">Click to upload or drag & drop</p>
+                    <p className="text-[10px] text-muted-foreground/60">PDF, PNG, JPG — up to 10MB</p>
+                    <input type="file" className="hidden" accept=".pdf,.png,.jpg,.jpeg" onChange={onInputChange} />
+                    </>:
+                <>
+                    <p className="text-sm font-medium">{file.name}</p>
+                    <Button type="button" variant="destructive" size="xs" onClick={removeFile}>Remove</Button>
+                </>}
             </label>
             {error && <FieldError errors={[error]} />}
         </Field>

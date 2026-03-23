@@ -176,6 +176,66 @@ export const me = async (data) =>{
 
   const decoded = verifyToken(token);
 
-  return {message: "Authenticated Successfully", user: {id: decoded.id, role: decoded.role}}
+  if (!decoded) {
+    throw new Error("Invalid token");
+  }
+
+  if (decoded.role == "Admin") {
+    const admin = await prisma.admin.findUnique({
+      where: { id: decoded.id}
+    })
+
+    if (!admin) {
+      throw new Error("Admin not found");
+    }
+    return {
+      message: "Authenticated Successfully", 
+      user: {
+        id: decoded.id, 
+        name: admin.name, 
+        email: admin.email, 
+        role: decoded.role
+      }}
+  }
+  else if (decoded.role == "ORG_Owner" || decoded.role == "ORG_Member") {
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id}
+    })
+
+    const org = await prisma.organization.findUnique({
+      where: { org_id: user.organizationId}
+    })
+
+    if (!user || !org) {
+      throw new Error("User or Organization not found");
+    }
+    return {
+      message: "Authenticated Successfully", 
+      user: {
+        id: decoded.id, 
+        name: user.first_name + " " + user.last_name, 
+        email: user.email, 
+        role: decoded.role, 
+        orgName: org.org_name, 
+        orgId: org.org_id,
+      }
+    }
+
+  }
+  else if(decoded.role == "Freelancer" || decoded.role == "Client"){
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id}
+    })
+
+    return {
+      message: "Authenticated Successfully", 
+      user: {
+        id: decoded.id, 
+        name: user.first_name + " " + user.last_name,
+        email: user.email,
+        role: decoded.role
+      }}
+  }
+
   
 }

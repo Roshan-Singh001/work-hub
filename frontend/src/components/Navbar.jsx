@@ -21,6 +21,7 @@ import {
     Building2,
     Zap,
     ChevronRight,
+    ArrowUpRight,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -91,7 +92,7 @@ export default function Navbar() {
                                 </NavigationMenuItem>
 
                                 <NavigationMenuItem>
-                                    <NavigationMenuTrigger className="text-sm font-medium">
+                                    <NavigationMenuTrigger className="text-sm font-medium bg-transparent">
                                         Hire Talent
                                     </NavigationMenuTrigger>
                                     <NavigationMenuContent>
@@ -120,7 +121,7 @@ export default function Navbar() {
                                                                         {description}
                                                                     </p>
                                                                 </div>
-                                                                <ChevronRight className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                                                                <ArrowUpRight className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                                                             </NavigationMenuLink>
                                                         </Link>
                                                     </li>

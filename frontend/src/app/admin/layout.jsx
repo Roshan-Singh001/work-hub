@@ -12,7 +12,7 @@ export default function Layout({ children }) {
             <SidebarTrigger className="-ml-1" />
           </div>
         </header>
-        <main className="p-4">
+        <main className="px-4 pb-4">
           {children}
         </main>
       </SidebarInset>

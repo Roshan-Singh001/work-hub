@@ -1,18 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { usePathname } from "next/navigation";
-import { useEffect } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import {
   AudioWaveform,
   BookOpen,
   Bot,
-  Users,
-  ShieldCheck,
   Command,
-  Briefcase,
-  MessagesSquare,
   Frame,
   GalleryVerticalEnd,
   Map,
@@ -78,90 +72,76 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 const data = {
+  user: {
+    name: "Roshan Singh",
+    email: "m@example.com",
+    avatar: "/avatars/roshansingh.jpg",
+  },
   navMain: [
     {
-      title: "Overview",
+      title: "Home",
       url: "/admin/dashboard",
-      icon: LayoutDashboard,
+      icon: House,
       isActive: true,
     },
     {
-      title: "Users",
+      title: "Playground",
       url: "#",
-      icon: Users,
+      icon: SquareTerminal,
       isActive: true,
       items: [
         {
-          title: "All Users",
-          url: "/admin/dashboard/users/all",
-        },
-        {
-          title: "Organizations",
-          url: "/admin/dashboard/users/orgs",
-        },
-        {
-          title: "Freelancers",
-          url: "/admin/dashboard/users/freelancers",
-        },
-        {
-          title: "Clients",
-          url: "/admin/dashboard/users/clients",
-        },
-        {
-          title: "Banned Users",
-          url: "/admin/dashboard/users/banned",
-        },
-      ],
-    },
-    {
-      title: "Projects",
-      url: "#",
-      icon: Briefcase,
-      items: [
-        {
-          title: "All Projects",
+          title: "History",
           url: "#",
         },
         {
-          title: "Active Projects",
+          title: "Starred",
           url: "#",
         },
         {
-          title: "Pending Projects",
+          title: "Settings",
           url: "#",
         },
       ],
     },
     {
-      title: "Messages",
+      title: "Models",
       url: "#",
-      icon: MessagesSquare,
+      icon: Bot,
       items: [
         {
-          title: "Announcements",
+          title: "Genesis",
           url: "#",
         },
         {
-          title: "Messages",
+          title: "Explorer",
+          url: "#",
+        },
+        {
+          title: "Quantum",
           url: "#",
         },
       ],
     },
     {
-      title: "Moderation",
+      title: "Documentation",
       url: "#",
-      icon: ShieldCheck,
+      icon: BookOpen,
       items: [
         {
-          title: "Reports",
+          title: "Introduction",
           url: "#",
         },
         {
-          title: "Complaints",
+          title: "Get Started",
           url: "#",
         },
         {
-          title: "Feedback",
+          title: "Tutorials",
+          url: "#",
+        },
+        {
+          title: "Changelog",
           url: "#",
         },
       ],
@@ -175,24 +155,43 @@ const data = {
           title: "General",
           url: "#",
         },
+        {
+          title: "Team",
+          url: "#",
+        },
+        {
+          title: "Billing",
+          url: "#",
+        },
+        {
+          title: "Limits",
+          url: "#",
+        },
       ],
+    },
+  ],
+  projects: [
+    {
+      name: "Design Engineering",
+      url: "#",
+      icon: Frame,
+    },
+    {
+      name: "Sales & Marketing",
+      url: "#",
+      icon: PieChart,
+    },
+    {
+      name: "Travel",
+      url: "#",
+      icon: Map,
     },
   ],
 }
 
 export function AppSidebar({ ...props }) {
-  const { userData, loading, logOut } = useAuth();
+  const { userData } = useAuth();
 
-  if (loading || !userData) {
-    return <div>Loading...</div>;
-  }
-
-
-  const user = {
-    name: userData?.name || "Admin",
-    email: userData?.email || "Not provided",
-    avatar: "/avatars/admin.jpg",
-  }
 
   return (
     <Sidebar collapsible="icon" variant="inset" {...props}>
@@ -212,17 +211,17 @@ export function AppSidebar({ ...props }) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-
+        <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} logOut={logOut} />
+        <NavUser user={data.user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   )
 }
 
-function NavUser({ user, logOut }) {
+function NavUser({ user }) {
   const { isMobile } = useSidebar();
 
   return (
@@ -255,7 +254,7 @@ function NavUser({ user, logOut }) {
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">AD</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -264,11 +263,21 @@ function NavUser({ user, logOut }) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-
+            <DropdownMenuGroup>
+              <DropdownMenuItem>
+                <Sparkles />
+                Upgrade to Pro
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
                 Account
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <CreditCard />
+                Billing
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Bell />
@@ -276,7 +285,7 @@ function NavUser({ user, logOut }) {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={()=>logOut()}>
+            <DropdownMenuItem>
               <LogOut />
               Log out
             </DropdownMenuItem>
@@ -287,64 +296,106 @@ function NavUser({ user, logOut }) {
   )
 }
 
-function NavMain({ items }) {
-  const pathname = usePathname();
+function NavProjects({ projects }) {
+  const { isMobile } = useSidebar()
 
   return (
-    <SidebarGroup>
+    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+      <SidebarGroupLabel>Projects</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => {
-          const isActive =
-            pathname === item.url ||
-            item.items?.some((subItem) =>
-              pathname.startsWith(subItem.url)
-            );
-          console.log(isActive, pathname, item.url);
+        {projects.map((item) => (
+          <SidebarMenuItem key={item.name}>
+            <SidebarMenuButton asChild>
+              <a href={item.url}>
+                <item.icon />
+                <span>{item.name}</span>
+              </a>
+            </SidebarMenuButton>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuAction showOnHover>
+                  <MoreHorizontal />
+                  <span className="sr-only">More</span>
+                </SidebarMenuAction>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-48 rounded-lg"
+                side={isMobile ? "bottom" : "right"}
+                align={isMobile ? "end" : "start"}
+              >
+                <DropdownMenuItem>
+                  <Folder className="text-muted-foreground" />
+                  <span>View Project</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Forward className="text-muted-foreground" />
+                  <span>Share Project</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Trash2 className="text-muted-foreground" />
+                  <span>Delete Project</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        ))}
+        <SidebarMenuItem>
+          <SidebarMenuButton className="text-sidebar-foreground/70">
+            <MoreHorizontal className="text-sidebar-foreground/70" />
+            <span>More</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </SidebarGroup>
+  )
+}
 
-          return (
-            <Collapsible
-              key={item.title}
-              asChild
-              defaultOpen={isActive}
-              className="group/collapsible"
-            >
-              <SidebarMenuItem>
-                {item.items ?
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip={item.title}>
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
-                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger> :
-
-                  <SidebarMenuButton tooltip={item.title} isActive={pathname === item.url}>
+function NavMain({ items }) {
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
+      <SidebarMenu>
+        {items.map((item) => (
+          <Collapsible
+            key={item.title}
+            asChild
+            defaultOpen={item.isActive}
+            className="group/collapsible"
+          >
+            <SidebarMenuItem>
+              {item.items ?
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton tooltip={item.title}>
                     {item.icon && <item.icon />}
-                    <a href={item.url}>
-                      <span>{item.title}</span>
-                    </a>
-                    {/* <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" /> */}
+                    <span>{item.title}</span>
+                    <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                   </SidebarMenuButton>
-                }
+                </CollapsibleTrigger> :
+                <SidebarMenuButton tooltip={item.title}>
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
+                  {/* <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" /> */}
+                </SidebarMenuButton>
+              }
 
-                {item.items && <CollapsibleContent>
-                  <SidebarMenuSub>
-                    {item.items?.map((subItem) => (
-                      <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
-                          <a href={subItem.url}>
-                            <span>{subItem.title}</span>
-                          </a>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
-                  </SidebarMenuSub>
-                </CollapsibleContent>}
+              {item.items && <CollapsibleContent>
+                <SidebarMenuSub>
+                  {item.items?.map((subItem) => (
+                    <SidebarMenuSubItem key={subItem.title}>
+                      <SidebarMenuSubButton asChild>
+                        <a href={subItem.url}>
+                          <span>{subItem.title}</span>
+                        </a>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  ))}
+                </SidebarMenuSub>
+              </CollapsibleContent>}
 
-              </SidebarMenuItem>
-            </Collapsible>
-          )
-        })}
+            </SidebarMenuItem>
+          </Collapsible>
+        ))}
       </SidebarMenu>
     </SidebarGroup>
   )

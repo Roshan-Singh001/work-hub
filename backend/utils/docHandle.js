@@ -13,6 +13,7 @@ export const uploadDoc = async (file, folder) => {
         use_filename: true,
         unique_filename: false,
         overwrite: true,
+        resource_type: "auto",
     };
 
     try {

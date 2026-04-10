@@ -7,6 +7,8 @@ import * as z from "zod"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
+import { useAuth } from "@/contexts/AuthContext"
+
 import {
     Building2, User, Briefcase, ArrowRight,
     Upload, Globe, Phone, Mail, Lock, FileText, ShieldUser,
@@ -37,6 +39,7 @@ const accountSchema = z.object({
 })
 
 export default function Login() {
+    const { refreshUser } = useAuth();
     const [role, setRole] = useState("");
     const router = useRouter();
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
@@ -67,18 +70,23 @@ export default function Login() {
         console.log("Logged in:", data)
         if (data.role === "Admin") {
             console.log("Redirecting to admin dashboard");
+            refreshUser();
             router.push("/admin/dashboard");
         }
         else if (data.role === "ORG_Owner") {
+            refreshUser();
             router.push("/orgs/admin/dashboard");
         }
         else if (data.role === "ORG_Member") {
+            refreshUser();
             router.push("/orgs/member/dashboard");
         }
         else if (data.role === "Freelancer") {
+            refreshUser();
             router.push("/freelancer/dashboard");
         }
         else if (data.role === "Client") {
+            refreshUser();
             router.push("/client/dashboard");
         }
     }

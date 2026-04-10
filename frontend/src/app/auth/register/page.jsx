@@ -62,7 +62,7 @@ const freelancerSchema = z.object({
     country: z.string().min(1, "Please select a country"),
     phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid international phone number"),
     skillCategory: z.string().min(1, "Please select a skill category"),
-    resume: z.instanceof(File).refine(file => file.size > 0, "Resume is required"),
+    license: z.instanceof(File).refine(file => file.size > 0, "Resume is required"),
     about: z.string().min(20, "Please write at least 20 characters"),
     ...accountSchema,
 })
@@ -230,10 +230,15 @@ function Client({ onSuccess }) {
                 signal: AbortSignal.timeout(60000),
             })
             const json = await res.json()
-            if (!res.ok) throw new Error(json.message || "Registration failed")
-            onSuccess?.(json)
+            if (!res.ok) {
+                toast.error(json.message || "Registration failed")
+            } else {
+                toast.success(json.message);
+                onSuccess?.(json)
+            }
         } catch (err) {
-            alert(err.message)
+            console.error("Registration error: ", err);
+            toast.error(json.message || "Registration failed")
         }
     }
 
@@ -323,10 +328,10 @@ function Freelancer({ onSuccess }) {
                 toast.error(json.message || "Registration failed")
             } else {
                 toast.success(json.message);
+                onSuccess?.(json)
             }
-            onSuccess?.(json)
         } catch (err) {
-            toast.error(json.message || "Registration failed")
+            toast.error("Registration failed")
             console.error("Registration error: ", err);
         }
     }
@@ -412,7 +417,7 @@ function Freelancer({ onSuccess }) {
                 {errors.about && <FieldError errors={[errors.about]} />}
             </Field>
 
-            <UploadZone label="Portfolio / Resume / Certificate" name="resume" setValue={setValue} error={errors.resume} />
+            <UploadZone label="Portfolio / Resume / Certificate" name="license" setValue={setValue} error={errors.license} />
 
             <AccountFields register={register} errors={errors} />
 
@@ -452,10 +457,10 @@ function Orgs({ onSuccess }) {
                 toast.error(json.message || "Registration failed")
             } else {
                 toast.success(json.message);
+                onSuccess?.(json)
             }
-            onSuccess?.(json)
         } catch (err) {
-            toast.error(json.message || "Registration failed")
+            toast.error("Registration failed")
             console.error("Registration error: ", err);
         }
     }

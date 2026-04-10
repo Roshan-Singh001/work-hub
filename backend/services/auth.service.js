@@ -21,7 +21,7 @@ export const register = async (req) => {
   if (data.role == 'orgs') {
 
     const file_path = req?.file.path;
-    const org_id = 'org_' + uuidv4().replaceAll("-", "_");
+    const orgId = 'org_' + uuidv4().replaceAll("-", "_");
     const user_id = 'user_' + uuidv4().replaceAll("-", "_");
     const uploaded_url = await uploadDoc(file_path, "org");
 
@@ -34,13 +34,13 @@ export const register = async (req) => {
         password: hashedPassword,
         role: "ORG_Owner",
         phone: data.phone,
-        organizationId: org_id
+        organizationId: orgId
       }
     });
 
     await prisma.organization.create({
       data: {
-        org_id: org_id,
+        org_id: orgId,
         org_name: data.orgName,
         about: data.about,
         website: data?.website,
@@ -55,7 +55,7 @@ export const register = async (req) => {
     await prisma.org_member.create({
       data: {
         id: user_id,
-        organizationId: org_id,
+        organizationId: orgId,
         local_role: "Owner",
       }
     })
@@ -218,6 +218,7 @@ export const me = async (data) =>{
         role: decoded.role, 
         orgName: org.org_name, 
         orgId: org.org_id,
+        status: user.status,
       }
     }
 
@@ -233,7 +234,8 @@ export const me = async (data) =>{
         id: decoded.id, 
         name: user.first_name + " " + user.last_name,
         email: user.email,
-        role: decoded.role
+        role: decoded.role,
+        status: user.status,
       }}
   }
 

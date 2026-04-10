@@ -14,6 +14,7 @@ import {
   Briefcase,
   MessagesSquare,
   Frame,
+  ShieldUser,
   GalleryVerticalEnd,
   Map,
   PieChart,
@@ -120,15 +121,15 @@ const data = {
       items: [
         {
           title: "All Projects",
-          url: "#",
+          url: "/admin/dashboard/projects/all",
         },
         {
           title: "Active Projects",
-          url: "#",
+          url: "/admin/dashboard/projects/active",
         },
         {
           title: "Pending Projects",
-          url: "#",
+          url: "/admin/dashboard/projects/pending",
         },
       ],
     },
@@ -139,11 +140,11 @@ const data = {
       items: [
         {
           title: "Announcements",
-          url: "#",
+          url: "/admin/dashboard/messages/announcements",
         },
         {
           title: "Messages",
-          url: "#",
+          url: "/admin/dashboard/messages",
         },
       ],
     },
@@ -154,15 +155,15 @@ const data = {
       items: [
         {
           title: "Reports",
-          url: "#",
+          url: "/admin/dashboard/moderation/reports",
         },
         {
           title: "Complaints",
-          url: "#",
+          url: "/admin/dashboard/moderation/complaints",
         },
         {
           title: "Feedback",
-          url: "#",
+          url: "/admin/dashboard/moderation/feedback",
         },
       ],
     },
@@ -173,7 +174,7 @@ const data = {
       items: [
         {
           title: "General",
-          url: "#",
+          url: "/admin/dashboard/settings/general",
         },
       ],
     },
@@ -183,7 +184,7 @@ const data = {
 export function AppSidebar({ ...props }) {
   const { userData, loading, logOut } = useAuth();
 
-  if (loading || !userData) {
+  if (loading && !userData) {
     return <div>Loading...</div>;
   }
 
@@ -191,7 +192,7 @@ export function AppSidebar({ ...props }) {
   const user = {
     name: userData?.name || "Admin",
     email: userData?.email || "Not provided",
-    avatar: "/avatars/admin.jpg",
+    avatar: "/avatars/admin.svg",
   }
 
   return (
@@ -235,8 +236,7 @@ function NavUser({ user, logOut }) {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarFallback className="rounded-lg"><ShieldUser className="text-black dark:text-white" /></AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -254,8 +254,7 @@ function NavUser({ user, logOut }) {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">AD</AvatarFallback>
+                  <AvatarFallback className="rounded-lg"><ShieldUser className="text-black dark:text-white" /></AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -299,7 +298,6 @@ function NavMain({ items }) {
             item.items?.some((subItem) =>
               pathname.startsWith(subItem.url)
             );
-          console.log(isActive, pathname, item.url);
 
           return (
             <Collapsible
@@ -323,7 +321,6 @@ function NavMain({ items }) {
                     <a href={item.url}>
                       <span>{item.title}</span>
                     </a>
-                    {/* <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" /> */}
                   </SidebarMenuButton>
                 }
 

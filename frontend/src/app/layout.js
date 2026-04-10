@@ -8,11 +8,6 @@ const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
 });
-// const poppins = Poppins({
-//   variable: "--font-poppins-sans",
-//   weight: ["400", "500", "600", "700"],
-//   subsets: ["latin"],
-// });
 
 export const metadata = {
   title: "Work Hub",

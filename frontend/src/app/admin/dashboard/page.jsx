@@ -1,7 +1,12 @@
 "use client"
-import { useState,useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext"
+import { useForm, Controller, useFormState } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
 
+import { toast } from "sonner";
 import {
     Card,
     CardContent,
@@ -9,6 +14,11 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
+import {
+    Field,
+    FieldError,
+    FieldLabel,
+} from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -44,23 +54,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import {
-    ChartContainer,
-    ChartTooltip,
-    ChartTooltipContent,
-    ChartLegend,
-    ChartLegendContent,
-} from "@/components/ui/chart"
-import {
-    LineChart,
-    Line,
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-} from "recharts"
 import {
     Users,
     UserCheck,
@@ -71,6 +64,9 @@ import {
     UserPlus,
     FolderPlus,
     CheckCircle,
+    CircleAlert,
+    CircleX,
+    RotateCw,
     Ban,
     MoreHorizontal,
     AlertTriangle,
@@ -82,477 +78,400 @@ import {
     ArrowDownRight,
     Zap,
     Clock,
+    Phone,
+    User,
+    PhoneCall,
+    Mail,
+    Lock,
+    Globe,
+    Briefcase,
 } from "lucide-react"
-
-const userGrowthData = [
-    { month: "Aug", users: 420 },
-    { month: "Sep", users: 580 },
-    { month: "Oct", users: 740 },
-    { month: "Nov", users: 860 },
-    { month: "Dec", users: 1020 },
-    { month: "Jan", users: 1180 },
-    { month: "Feb", users: 1390 },
-    { month: "Mar", users: 1640 },
-]
-
-const projectData = [
-    { month: "Aug", posted: 80, completed: 55 },
-    { month: "Sep", posted: 120, completed: 88 },
-    { month: "Oct", posted: 145, completed: 102 },
-    { month: "Nov", posted: 160, completed: 130 },
-    { month: "Dec", posted: 190, completed: 148 },
-    { month: "Jan", posted: 210, completed: 172 },
-    { month: "Feb", posted: 245, completed: 198 },
-    { month: "Mar", posted: 280, completed: 224 },
-]
-
-const userGrowthConfig = {
-    users: {
-        label: "Total Users",
-        color: "hsl(var(--chart-1))",
-    },
-}
-
-const projectChartConfig = {
-    posted: {
-        label: "Posted",
-        color: "hsl(var(--chart-1))",
-    },
-    completed: {
-        label: "Completed",
-        color: "hsl(var(--chart-2))",
-    },
-}
-
-// ── Table Data ────────────────────────────────────────────────────────────────
-
-const initialUsers = [
-    { id: 1, name: "Arjun Mehta", role: "Freelancer", status: "Pending", joined: "2h ago" },
-    { id: 2, name: "Priya Sharma", role: "Client", status: "Active", joined: "4h ago" },
-    { id: 3, name: "Rahul Verma", role: "Freelancer", status: "Pending", joined: "6h ago" },
-    { id: 4, name: "Neha Kapoor", role: "Organization", status: "Active", joined: "1d ago" },
-    { id: 5, name: "Vikram Nair", role: "Freelancer", status: "Banned", joined: "1d ago" },
-    { id: 6, name: "Sneha Joshi", role: "Client", status: "Active", joined: "2d ago" },
-]
-
-const recentProjects = [
-    { id: 1, title: "E-commerce Website Redesign", client: "TechCorp Ltd.", status: "Active", budget: "₹45,000" },
-    { id: 2, title: "Mobile App UI/UX", client: "StartupXYZ", status: "Completed", budget: "₹28,000" },
-    { id: 3, title: "Backend API Development", client: "DataSys Inc.", status: "Active", budget: "₹62,000" },
-    { id: 4, title: "SEO & Content Writing", client: "GrowthMedia", status: "Pending", budget: "₹12,000" },
-    { id: 5, title: "React Dashboard", client: "FinTech Hub", status: "Active", budget: "₹38,000" },
-]
-
-const initialRequests = [
-    { id: 1, name: "Karan Singh", type: "Freelancer Approval", submitted: "3h ago", skill: "Full Stack Dev" },
-    { id: 2, name: "Meera Nambiar", type: "Freelancer Approval", submitted: "5h ago", skill: "UI/UX Design" },
-    { id: 3, name: "Apex Solutions", type: "Organization Verification", submitted: "8h ago", skill: "IT Agency" },
-    { id: 4, name: "DevCraft Studio", type: "Organization Verification", submitted: "1d ago", skill: "Design Studio" },
-]
-
-const initialAlerts = [
-    { id: 1, icon: AlertTriangle, title: "14 Pending Approvals", desc: "Freelancer profiles awaiting review" },
-    { id: 2, icon: ShieldAlert, title: "3 Reported Users", desc: "Users flagged for policy violations" },
-    { id: 3, icon: MessageSquareWarning, title: "7 Open Complaints", desc: "Client disputes pending resolution" },
-]
 
 export default function AdminDashboard() {
     const { userData, loading } = useAuth();
-    const [userRows, setUserRows] = useState(initialUsers)
-    const [requestRows, setRequestRows] = useState(initialRequests)
-    const [alertList, setAlertList] = useState(initialAlerts)
+    const router = useRouter();
+    const [overviewStats, setOverviewStats] = useState(null);
+
+    const [recentUsers, setRecentUsers] = useState([]);
+    const [recentProjects, setRecentProjects] = useState([]);
+    const [pendingRequests, setPendingRequests] = useState([]);
 
     useEffect(() => {
-        if (loading) return;;
+        if (loading) return;
+        async function fetchStats() {
+            try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/overview/`, {
+                    method: "GET",
+                    credentials: "include",
+                })
+                const data = await res.json();
+                setOverviewStats(data);
+                setRecentUsers(data.recentUsers);
+                setRecentProjects(data.recentProjects);
+                setPendingRequests(data.pendingRequests);
+                console.log("Stats data: ", data);
+
+            } catch (error) {
+                console.error("Error fetching stats: ", error);
+                toast.error("Failed to load dashboard stats. Please try again later.");
+            }
+        }
+        fetchStats();
     }, [])
+
     const handleUserAction = (id, action) => {
-        setUserRows(prev =>
+        setRecentUsers(prev =>
             prev.map(u =>
                 u.id === id ? { ...u, status: action === "approve" ? "Active" : "Banned" } : u
             )
         )
     }
 
-    const handleRequest = (id) =>
-        setRequestRows(prev => prev.filter(r => r.id !== id))
+    const handleApprove = async (id) => {
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/approve/${id}`, {
+                method: "POST",
+                credentials: "include",
+            })
+            toast.success("Request approved successfully");
+            setPendingRequests(prev => prev.filter(r => r.id !== id))
+        } catch (error) {
+            console.error("Error approving request: ", error);
+            toast.error("Failed to approve request. Please try again later.");
+        }
+    }
 
-    const dismissAlert = (id) =>
-        setAlertList(prev => prev.filter(a => a.id !== id))
-
-
+    const handleReject = async (id) => {
+        try {
+            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/reject/${id}`, {
+                method: "POST",
+                credentials: "include",
+            })
+            toast.success("Request rejected successfully");
+            setPendingRequests(prev => prev.filter(r => r.id !== id))
+        } catch (error) {
+            console.error("Error rejecting request: ", error);
+            toast.error("Failed to reject request. Please try again later.");
+        }
+    }
 
     console.log("User Data: ", userData);
 
     return (
         <>
             <div className="min-h-screen bg-background">
-            <div className="max-w-7xl mx-auto space-y-8">
- 
-                {/* ── Header ── */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                        
-                        <h1 className="text-3xl font-bold tracking-tight">Welcome, {userData?.name || "Admin"} 👋</h1>
-                        <p className="text-muted-foreground mt-1 text-sm">
-                            Here's what's happening on WorkHub today —{" "}
-                            <span className="font-medium text-foreground">March 25, 2026</span>
-                        </p>
+                <div className="max-w-7xl mx-auto space-y-8">
+
+                    {/* ── Header ── */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+
+                            <h1 className="text-3xl font-bold tracking-tight">Welcome, {userData?.name || "Admin"} 👋</h1>
+                            <p className="text-muted-foreground mt-1 text-sm">
+                                Here's what's happening on WorkHub today -{" "}
+                                <span className="font-medium text-foreground">{new Date().toLocaleDateString("en-US", {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                })}</span>
+                            </p>
+                        </div>
+                        {/* <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" className="gap-2">
+                                <Bell className="h-4 w-4" />
+                                Notifications
+                                <Badge className="h-4 px-1.5 text-[10px]">24</Badge>
+                            </Button>
+                        </div> */}
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" className="gap-2">
-                            <Bell className="h-4 w-4" />
-                            Notifications
-                            <Badge className="h-4 px-1.5 text-[10px]">24</Badge>
-                        </Button>
+
+                    {/* ── Stat Cards ── */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <StatCard icon={Users} label="Total Users" value={overviewStats?.totalUsers} sub="" />
+                        <StatCard icon={UserCheck} label="Freelancers" value={overviewStats?.totalFreelancer} sub="" />
+                        <StatCard icon={Building2} label="Organizations" value={overviewStats?.totalOrgs} sub="" />
+                        <StatCard icon={FolderOpen} label="Active Projects" value={overviewStats?.totalProjects} sub="" />
                     </div>
-                </div>
- 
-                {/* ── Alerts ── */}
-                {alertList.length > 0 && (
-                    <div className="space-y-2">
-                        {alertList.map(({ id, icon: Icon, title, desc }) => (
-                            <Alert key={id} className="flex items-center justify-between pr-3">
-                                <div className="flex items-start gap-3">
-                                    <Icon className="h-4 w-4 mt-0.5 text-foreground" />
+
+                    {/* ── Quick Actions ── */}
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-base">Quick Actions</CardTitle>
+                            <CardDescription className="text-xs">Common admin tasks - one click away</CardDescription>
+                        </CardHeader>
+                        <Separator />
+                        <CardContent className="pt-4">
+                            <div className="flex flex-wrap gap-2">
+                                <AddUserDialog />
+                                <AddProjectDialog />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+
+
+                    {/* ── User & Project Tables ── */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                        {/* Recent Users */}
+                        {recentUsers && (<Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
                                     <div>
-                                        <AlertTitle className="text-sm font-semibold leading-none mb-1">{title}</AlertTitle>
-                                        <AlertDescription className="text-xs">{desc}</AlertDescription>
+                                        <CardTitle className="text-base">Recent Users</CardTitle>
+                                        <CardDescription className="text-xs mt-0.5">Newly registered accounts</CardDescription>
                                     </div>
+                                    <Button onClick={() => { router.push("/admin/dashboard/users/all") }} variant="ghost" size="sm" className="text-xs h-7">View all</Button>
                                 </div>
-                                <Button variant="ghost" size="sm" className="text-xs h-7 shrink-0" onClick={() => dismissAlert(id)}>
-                                    Dismiss
-                                </Button>
-                            </Alert>
-                        ))}
+                            </CardHeader>
+
+                            {recentUsers.length === 0 ?
+                                <CardContent className="h-60 flex items-center justify-center text-muted-foreground">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <User className="h-8 w-8" />
+                                        <p className="text-sm font-medium">No recent users</p>
+                                        <p className="text-xs">New user registrations will appear here.</p>
+                                    </div>
+                                </CardContent> :
+
+                                <CardContent className="p-0">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="pl-6 text-xs">Name</TableHead>
+                                                <TableHead className="text-xs">Role</TableHead>
+                                                <TableHead className="text-xs">Status</TableHead>
+                                                <TableHead className="pr-6 text-xs">Action</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {recentUsers.map((u) => (
+                                                <TableRow key={u.id}>
+                                                    <TableCell className="pl-6">
+                                                        <div>
+                                                            <p className="text-sm font-medium">{u.first_name + ' ' + u.last_name}</p>
+                                                            {u.role == 'ORG_Owner' && <p className="mb-2 text-xs text-muted-foreground flex items-center gap-1">
+                                                                {u.organization?.org_name}
+                                                            </p>}
+                                                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                                                <Clock className="h-2.5 w-2.5" />{new Date(u.createdAt).toLocaleDateString("en-US", {
+                                                                    day: 'numeric',
+                                                                    year: 'numeric',
+                                                                    month: 'short',
+                                                                    hour: '2-digit',
+                                                                    minute: '2-digit',
+                                                                })}
+                                                            </p>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <span className="text-xs text-muted-foreground">{u.role == 'ORG_Owner' ? 'Organization Owner' : u.role}</span>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <StatusBadge status={(u.status).toUpperCase()} />
+                                                    </TableCell>
+                                                    <TableCell className="pr-6">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" size="icon" className="h-7 w-7">
+                                                                    <MoreHorizontal className="h-4 w-4" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end">
+
+                                                                {u.status === 'pending' && <DropdownMenuItem
+                                                                    className="text-xs gap-2"
+                                                                    onClick={() => handleUserAction(u.id, "approve")}
+                                                                >
+                                                                    <CheckCircle className="h-3.5 w-3.5" /> Approve
+                                                                </DropdownMenuItem>}
+
+                                                                {u.status === 'pending' && <DropdownMenuItem
+                                                                    className="text-xs gap-2"
+                                                                    onClick={() => handleUserAction(u.id, "reject")}
+                                                                >
+                                                                    <CircleX className="h-3.5 w-3.5" /> Reject
+                                                                </DropdownMenuItem>}
+
+                                                                {u.status === 'active' && <DropdownMenuItem
+                                                                    className="text-xs gap-2"
+                                                                    onClick={() => handleUserAction(u.id, "suspend")}
+                                                                >
+                                                                    <CircleAlert className="h-3.5 w-3.5" /> Suspend
+                                                                </DropdownMenuItem>}
+
+                                                                {(u.status === 'active' || u.status === 'suspend') && <DropdownMenuItem
+                                                                    className="text-xs gap-2 text-destructive focus:text-destructive"
+                                                                    onClick={() => handleUserAction(u.id, "ban")}
+                                                                >
+                                                                    <Ban className="h-3.5 w-3.5" /> Ban
+                                                                </DropdownMenuItem>}
+
+                                                                {(u.status === 'suspend' || u.status === 'banned') && <DropdownMenuItem
+                                                                    className="text-xs gap-2"
+                                                                    onClick={() => handleUserAction(u.id, "active")}
+                                                                >
+                                                                    <RotateCw className="h-3.5 w-3.5" /> Reactivate
+                                                                </DropdownMenuItem>}
+
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+
+                            }
+                        </Card>)}
+
+                        {/* Recent Projects */}
+                        {recentProjects && (<Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle className="text-base">Recent Projects</CardTitle>
+                                        <CardDescription className="text-xs mt-0.5">Latest project postings</CardDescription>
+                                    </div>
+                                    <Button onClick={() => { router.push("/admin/dashboard/projects/all") }} variant="ghost" size="sm" className="text-xs h-7">View all</Button>
+                                </div>
+                            </CardHeader>
+
+                            {recentProjects.length === 0 ?
+                                <CardContent className="h-60 flex items-center justify-center text-muted-foreground">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Briefcase className="h-8 w-8" />
+                                        <p className="text-sm font-medium">No recent projects</p>
+                                        <p className="text-xs">New project postings will appear here.</p>
+                                    </div>
+                                </CardContent> :
+
+                                <CardContent className="p-0">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="pl-6 text-xs">Title</TableHead>
+                                                <TableHead className="text-xs">Client</TableHead>
+                                                <TableHead className="text-xs">Budget</TableHead>
+                                                <TableHead className="pr-6 text-xs">Status</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {recentProjects.map((p) => (
+                                                <TableRow key={p.id}>
+                                                    <TableCell className="pl-6">
+                                                        <p className="text-sm font-medium max-w-37.5 truncate">{p.title}</p>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <span className="text-xs text-muted-foreground">{p.client}</span>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <span className="text-xs font-medium">{p.budget}</span>
+                                                    </TableCell>
+                                                    <TableCell className="pr-6">
+                                                        <StatusBadge status={p.status} />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+
+                            }
+                        </Card>)}
+
                     </div>
-                )}
- 
-                {/* ── Stat Cards ── */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard icon={Users} label="Total Users" value="1,640" sub="Across all roles" />
-                    <StatCard icon={UserCheck} label="Freelancers" value="984" sub="312 pending approval" />
-                    <StatCard icon={Building2} label="Organizations" value="218" sub="14 awaiting verification"  />
-                    <StatCard icon={FolderOpen} label="Active Projects" value="437" sub="89 completed this month" />
-                </div>
- 
-                {/* ── Quick Actions ── */}
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle className="text-base">Quick Actions</CardTitle>
-                        <CardDescription className="text-xs">Common admin tasks — one click away</CardDescription>
-                    </CardHeader>
-                    <Separator />
-                    <CardContent className="pt-4">
-                        <div className="flex flex-wrap gap-2">
-                            <AddUserDialog />
-                            <AddProjectDialog />
-                            <Button size="sm" variant="outline" className="gap-2">
-                                <CheckCircle className="h-4 w-4" />
-                                Approve Freelancers
-                                <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">14</Badge>
-                            </Button>
-                            <Button size="sm" variant="outline" className="gap-2 text-destructive hover:text-destructive">
-                                <Ban className="h-4 w-4" />
-                                Ban User
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
- 
-                {/* ── Charts ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
- 
-                    {/* User Growth — Line Chart */}
-                    <Card>
+
+                    {/* ── Pending Requests ── */}
+                    {pendingRequests && (<Card>
                         <CardHeader>
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <CardTitle className="text-base flex items-center gap-2">
-                                        <TrendingUp className="h-4 w-4" /> User Growth
-                                    </CardTitle>
+                                    <CardTitle className="text-base">Pending Requests</CardTitle>
                                     <CardDescription className="text-xs mt-0.5">
-                                        Monthly registered users (Aug '25 – Mar '26)
+                                        Freelancer approvals & organization verifications
                                     </CardDescription>
                                 </div>
-                                <Badge variant="secondary" className="text-xs">+18% MoM</Badge>
+                                <Badge variant="secondary">{pendingRequests.length} pending</Badge>
                             </div>
                         </CardHeader>
-                        <CardContent>
-                            <ChartContainer config={userGrowthConfig} className="min-h-55 w-full">
-                                <LineChart
-                                    data={userGrowthData}
-                                    margin={{ top: 4, right: 8, bottom: 0, left: -20 }}
-                                >
-                                    <CartesianGrid vertical={false} stroke="hsl(var(--color-chart-1))" />
-                                    <XAxis
-                                        dataKey="month"
-                                        tickLine={false}
-                                        axisLine={false}
-                                        tickMargin={8}
-                                        tick={{ fontSize: 11 }}
-                                    />
-                                    <YAxis
-                                        tickLine={false}
-                                        axisLine={false}
-                                        tick={{ fontSize: 11 }}
-                                    />
-                                    <ChartTooltip content={<ChartTooltipContent />} />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="users"
-                                        stroke="var(--color-users)"
-                                        strokeWidth={2}
-                                        dot={{ fill: "var(--color-users)", r: 3 }}
-                                        activeDot={{ r: 5 }}
-                                    />
-                                </LineChart>
-                            </ChartContainer>
-                        </CardContent>
-                    </Card>
- 
-                    {/* Projects — Bar Chart */}
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <CardTitle className="text-base flex items-center gap-2">
-                                        <BarChart3 className="h-4 w-4" /> Projects Overview
-                                    </CardTitle>
-                                    <CardDescription className="text-xs mt-0.5">
-                                        Posted vs completed per month
-                                    </CardDescription>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <ChartContainer config={projectChartConfig} className="min-h-55 w-full">
-                                <BarChart
-                                    data={projectData}
-                                    margin={{ top: 4, right: 8, bottom: 0, left: -20 }}
-                                    barSize={10}
-                                >
-                                    <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
-                                    <XAxis
-                                        dataKey="month"
-                                        tickLine={false}
-                                        axisLine={false}
-                                        tickMargin={8}
-                                        tick={{ fontSize: 11 }}
-                                    />
-                                    <YAxis
-                                        tickLine={false}
-                                        axisLine={false}
-                                        tick={{ fontSize: 11 }}
-                                    />
-                                    <ChartTooltip content={<ChartTooltipContent />} />
-                                    <ChartLegend content={<ChartLegendContent />} />
-                                    <Bar dataKey="posted" fill="var(--color-posted)" radius={[3, 3, 0, 0]} />
-                                    <Bar dataKey="completed" fill="var(--color-cyan-600)" radius={[3, 3, 0, 0]} />
-                                </BarChart>
-                            </ChartContainer>
-                        </CardContent>
-                    </Card>
- 
-                </div>
- 
-                {/* ── User & Project Tables ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
- 
-                    {/* Recent Users */}
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <CardTitle className="text-base">Recent Users</CardTitle>
-                                    <CardDescription className="text-xs mt-0.5">Newly registered accounts</CardDescription>
-                                </div>
-                                <Button variant="ghost" size="sm" className="text-xs h-7">View all</Button>
-                            </div>
-                        </CardHeader>
+
                         <CardContent className="p-0">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="pl-6 text-xs">Name</TableHead>
-                                        <TableHead className="text-xs">Role</TableHead>
-                                        <TableHead className="text-xs">Status</TableHead>
-                                        <TableHead className="pr-6 text-xs">Action</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {userRows.map((u) => (
-                                        <TableRow key={u.id}>
-                                            <TableCell className="pl-6">
-                                                <div>
-                                                    <p className="text-sm font-medium">{u.name}</p>
-                                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                                        <Clock className="h-2.5 w-2.5" />{u.joined}
-                                                    </p>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="text-xs text-muted-foreground">{u.role}</span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <StatusBadge status={u.status} />
-                                            </TableCell>
-                                            <TableCell className="pr-6">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                                                            <MoreHorizontal className="h-4 w-4" />
+                            {pendingRequests.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
+                                    <CheckCircle className="h-8 w-8" />
+                                    <p className="text-sm font-medium">All caught up!</p>
+                                    <p className="text-xs">No pending requests right now.</p>
+                                </div>
+                            ) : (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="pl-6 text-xs">Name</TableHead>
+                                            <TableHead className="text-xs">Type</TableHead>
+                                            <TableHead className="text-xs">Skill / Category</TableHead>
+                                            <TableHead className="text-xs">Submitted</TableHead>
+                                            <TableHead className="pr-6 text-xs">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {pendingRequests.map((r) => (
+                                            <TableRow key={r.id}>
+                                                <TableCell className="pl-6">
+                                                    <p className="text-sm font-medium">{r.role === 'ORG_Owner' ? r.organization.org_name : r.first_name + ' ' + r.last_name}</p>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge
+                                                        variant={r.role.includes("Freelancer") ? "outline" : "secondary"}
+                                                        className="text-xs whitespace-nowrap"
+                                                    >
+                                                        {r.role === 'ORG_Owner' ? 'Organization' : r.role}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className="text-xs text-muted-foreground">{r.freelancer?.skills_category ? r.freelancer.skills_category : r.organization.industry}</span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                                        <Clock className="h-2.5 w-2.5" />{new Date(r.createdAt).toLocaleDateString("en-US", {
+                                                            day: 'numeric',
+                                                            year: 'numeric',
+                                                            month: 'short',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit',
+                                                        })}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="pr-6">
+                                                    <div className="flex items-center gap-2">
+                                                        <Button
+                                                            size="sm"
+                                                            className="h-7 text-xs gap-1"
+                                                            onClick={() => handleApprove(r.id)}
+                                                        >
+                                                            <CheckCircle className="h-3 w-3" /> Approve
                                                         </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem
-                                                            className="text-xs gap-2"
-                                                            onClick={() => handleUserAction(u.id, "approve")}
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
+                                                            onClick={() => handleReject(r.id)}
                                                         >
-                                                            <CheckCircle className="h-3.5 w-3.5" /> Approve
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            className="text-xs gap-2 text-destructive focus:text-destructive"
-                                                            onClick={() => handleUserAction(u.id, "ban")}
-                                                        >
-                                                            <Ban className="h-3.5 w-3.5" /> Ban
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                                            <Ban className="h-3 w-3" /> Reject
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            )}
                         </CardContent>
-                    </Card>
- 
-                    {/* Recent Projects */}
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <CardTitle className="text-base">Recent Projects</CardTitle>
-                                    <CardDescription className="text-xs mt-0.5">Latest project postings</CardDescription>
-                                </div>
-                                <Button variant="ghost" size="sm" className="text-xs h-7">View all</Button>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="pl-6 text-xs">Title</TableHead>
-                                        <TableHead className="text-xs">Client</TableHead>
-                                        <TableHead className="text-xs">Budget</TableHead>
-                                        <TableHead className="pr-6 text-xs">Status</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {recentProjects.map((p) => (
-                                        <TableRow key={p.id}>
-                                            <TableCell className="pl-6">
-                                                <p className="text-sm font-medium max-w-37.5 truncate">{p.title}</p>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="text-xs text-muted-foreground">{p.client}</span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="text-xs font-medium">{p.budget}</span>
-                                            </TableCell>
-                                            <TableCell className="pr-6">
-                                                <StatusBadge status={p.status} />
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
- 
+                    </Card>)}
+
                 </div>
- 
-                {/* ── Pending Requests ── */}
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle className="text-base">Pending Requests</CardTitle>
-                                <CardDescription className="text-xs mt-0.5">
-                                    Freelancer approvals & organization verifications
-                                </CardDescription>
-                            </div>
-                            <Badge variant="secondary">{requestRows.length} pending</Badge>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        {requestRows.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
-                                <CheckCircle className="h-8 w-8" />
-                                <p className="text-sm font-medium">All caught up!</p>
-                                <p className="text-xs">No pending requests right now.</p>
-                            </div>
-                        ) : (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="pl-6 text-xs">Name</TableHead>
-                                        <TableHead className="text-xs">Type</TableHead>
-                                        <TableHead className="text-xs">Skill / Category</TableHead>
-                                        <TableHead className="text-xs">Submitted</TableHead>
-                                        <TableHead className="pr-6 text-xs">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {requestRows.map((r) => (
-                                        <TableRow key={r.id}>
-                                            <TableCell className="pl-6">
-                                                <p className="text-sm font-medium">{r.name}</p>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge
-                                                    variant={r.type.includes("Freelancer") ? "outline" : "secondary"}
-                                                    className="text-xs whitespace-nowrap"
-                                                >
-                                                    {r.type}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="text-xs text-muted-foreground">{r.skill}</span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                                    <Clock className="h-2.5 w-2.5" />{r.submitted}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="pr-6">
-                                                <div className="flex items-center gap-2">
-                                                    <Button
-                                                        size="sm"
-                                                        className="h-7 text-xs gap-1"
-                                                        onClick={() => handleRequest(r.id)}
-                                                    >
-                                                        <CheckCircle className="h-3 w-3" /> Approve
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
-                                                        onClick={() => handleRequest(r.id)}
-                                                    >
-                                                        <Ban className="h-3 w-3" /> Reject
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        )}
-                    </CardContent>
-                </Card>
- 
             </div>
-        </div>
         </>
     )
 }
@@ -563,11 +482,38 @@ function StatusBadge({ status }) {
         Completed: "secondary",
         Pending: "outline",
         Banned: "destructive",
+        Suspend: "warning",
     }
-    return <Badge variant={variants[status] || "outline"}>{status}</Badge>
+    return (
+        <>
+            {status === 'Suspend' ?
+                <Badge className={' dark:bg-amber-600 dark:text-white'} variant={"default"}>{status}</Badge> :
+                <Badge variant={variants[status] || "outline"}>{status}</Badge>}
+        </>
+    )
 }
 
-function StatCard({ icon: Icon, label, value, sub}) {
+function CountrySelect({ value, onChange, invalid }) {
+    return (
+        <Select value={value} onValueChange={onChange}>
+            <SelectTrigger aria-invalid={invalid}>
+                <SelectValue placeholder="Select country" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="us">United States</SelectItem>
+                <SelectItem value="uk">United Kingdom</SelectItem>
+                <SelectItem value="in">India</SelectItem>
+                <SelectItem value="ca">Canada</SelectItem>
+                <SelectItem value="au">Australia</SelectItem>
+                <SelectItem value="de">Germany</SelectItem>
+                <SelectItem value="fr">France</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+        </Select>
+    )
+}
+
+function StatCard({ icon: Icon, label, value, sub }) {
     return (
         <Card className={'py-4'}>
             <CardContent className="py-4 px-6">
@@ -587,6 +533,54 @@ function StatCard({ icon: Icon, label, value, sub}) {
 }
 
 function AddUserDialog() {
+    const [userRole, setUserRole] = useState(null);
+    const adminSchema = z.object({
+        name: z.string().min(2, "Name must be at least 2 characters"),
+        email: z.email("Enter a valid email address"),
+        phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid international phone number"),
+        password: z.string().min(8, "Password must be at least 8 characters"),
+    })
+    const clientSchema = z.object({
+        firstName: z.string().min(1, "First name is required"),
+        lastName: z.string().min(1, "Last name is required"),
+        organization: z.string().optional(),
+        country: z.string().min(1, "Please select a country"),
+        phone: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid international phone number"),
+        email: z.email("Enter a valid email address"),
+        password: z.string().min(8, "Password must be at least 8 characters"),
+    })
+
+    const schema = useMemo(() => {
+        return userRole === "Client" ? clientSchema : adminSchema
+    }, [userRole])
+
+    const { control, register, handleSubmit, formState: { errors, isSubmitting }, } = useForm({
+        resolver: zodResolver(schema),
+    })
+
+    async function onSubmit(data) {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/add/user/${userRole.toLowerCase()}`, {
+                method: "POST",
+                body: JSON.stringify({ role: userRole, ...data }),
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                signal: AbortSignal.timeout(60000),
+            })
+            const json = await res.json()
+            if (!res.ok) {
+                toast.error(json.message || "User Creation failed")
+            } else {
+                toast.success(json.message);
+                onSuccess?.(json)
+            }
+        } catch (err) {
+            console.error("User creation error: ", err);
+            toast.error(json.message || "User Creation failed")
+        }
+    }
+
     return (
         <Dialog>
             <DialogTrigger asChild>
@@ -599,36 +593,135 @@ function AddUserDialog() {
                     <DialogTitle>Add New User</DialogTitle>
                     <DialogDescription>Create a new user account on WorkHub.</DialogDescription>
                 </DialogHeader>
+
                 <div className="space-y-4 py-2">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                            <Label>First Name</Label>
-                            <Input placeholder="Arjun" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label>Last Name</Label>
-                            <Input placeholder="Mehta" />
-                        </div>
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label>Email</Label>
-                        <Input type="email" placeholder="arjun@example.com" />
-                    </div>
                     <div className="space-y-1.5">
                         <Label>Role</Label>
-                        <Select>
+                        <Select defaultValue={userRole || ""} onValueChange={(value) => setUserRole(value)}>
                             <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="freelancer">Freelancer</SelectItem>
-                                <SelectItem value="client">Client</SelectItem>
-                                <SelectItem value="organization">Organization</SelectItem>
+                                <SelectItem value="Admin">Admin</SelectItem>
+                                <SelectItem value="Client">Client</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
+
+                    {userRole === 'Admin' && <>
+                        <form onSubmit={handleSubmit(onSubmit)} className="h-fit space-y-4 overflow-auto">
+                            <Field data-invalid={!!errors.name}>
+                                <FieldLabel htmlFor="name" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                                    <User className="w-3 h-3" /> Name
+                                </FieldLabel>
+                                <Input {...register("name")} id="name" type="text" placeholder="Roshan Singh" aria-invalid={!!errors.name} />
+                                {errors.name && <FieldError errors={[errors.name]} />}
+                            </Field>
+
+                            <Field data-invalid={!!errors.email}>
+                                <FieldLabel htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                                    <Mail className="w-3 h-3" /> Email Address
+                                </FieldLabel>
+                                <Input {...register("email")} id="email" type="email" placeholder="you@example.com" aria-invalid={!!errors.email} />
+                                {errors.email && <FieldError errors={[errors.email]} />}
+                            </Field>
+
+                            <Field data-invalid={!!errors.phone}>
+                                <FieldLabel htmlFor="phone" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                                    <PhoneCall className="w-3 h-3" /> Phone
+                                </FieldLabel>
+                                <Input {...register("phone")} id="phone" type="tel" placeholder="+1 555 0000" aria-invalid={!!errors.phone} />
+                                {errors.phone && <FieldError errors={[errors.phone]} />}
+                            </Field>
+
+                            <Field data-invalid={!!errors?.password}>
+                                <FieldLabel htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                                    <Lock className="w-3 h-3" /> Password
+                                </FieldLabel>
+                                <Input {...register("password")} id="password" type="password" placeholder="Min. 8 characters" aria-invalid={!!errors.password} />
+                                {errors?.password && <FieldError errors={[errors.password]} />}
+                            </Field>
+
+                            <DialogFooter>
+                                <Button type="submit" disabled={isSubmitting} className="w-full">
+                                    {isSubmitting ? "Creating user…" : <>Create User</>}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+
+                    </>}
+
+                    {userRole === 'Client' && <>
+                        <form onSubmit={handleSubmit(onSubmit)} className="h-fit overflow-auto space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <Field data-invalid={!!errors.firstName}>
+                                    <FieldLabel htmlFor="firstName">First Name</FieldLabel>
+                                    <Input {...register("firstName")} id="firstName" placeholder="John" aria-invalid={!!errors.firstName} />
+                                    {errors.firstName && <FieldError errors={[errors.firstName]} />}
+                                </Field>
+
+                                <Field data-invalid={!!errors.lastName}>
+                                    <FieldLabel htmlFor="lastName">Last Name</FieldLabel>
+                                    <Input {...register("lastName")} id="lastName" placeholder="Doe" aria-invalid={!!errors.lastName} />
+                                    {errors.lastName && <FieldError errors={[errors.lastName]} />}
+                                </Field>
+                            </div>
+
+                            <Field data-invalid={!!errors.organization}>
+                                <FieldLabel htmlFor="organization" className="flex items-center gap-1.5">
+                                    <Building2 className="w-3 h-3" /> Organization <span className="text-muted-foreground font-normal">(Optional)</span>
+                                </FieldLabel>
+                                <Input {...register("organization")} id="organization" placeholder="Your company or org name" />
+                            </Field>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <Controller
+                                    name="country"
+                                    control={control}
+                                    render={({ field, fieldState }) => (
+                                        <Field data-invalid={fieldState.invalid}>
+                                            <FieldLabel htmlFor="country" className="flex items-center gap-1.5">
+                                                <Globe className="w-3 h-3" /> Country
+                                            </FieldLabel>
+                                            <CountrySelect value={field.value} onChange={field.onChange} invalid={fieldState.invalid} />
+                                            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                        </Field>
+                                    )}
+                                />
+
+                                <Field data-invalid={!!errors.phone}>
+                                    <FieldLabel htmlFor="phone" className="flex items-center gap-1.5">
+                                        <Phone className="w-3 h-3" /> Phone
+                                    </FieldLabel>
+                                    <Input {...register("phone")} id="phone" type="tel" placeholder="+1 555 0000" aria-invalid={!!errors.phone} />
+                                    {errors.phone && <FieldError errors={[errors.phone]} />}
+                                </Field>
+                            </div>
+
+                            <Field data-invalid={!!errors.email}>
+                                <FieldLabel htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                                    <Mail className="w-3 h-3" /> Email Address
+                                </FieldLabel>
+                                <Input {...register("email")} id="email" type="email" placeholder="you@example.com" aria-invalid={!!errors.email} />
+                                {errors.email && <FieldError errors={[errors.email]} />}
+                            </Field>
+
+                            <Field data-invalid={!!errors?.password}>
+                                <FieldLabel htmlFor="password" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                                    <Lock className="w-3 h-3" /> Password
+                                </FieldLabel>
+                                <Input {...register("password")} id="password" type="password" placeholder="Min. 8 characters" aria-invalid={!!errors.password} />
+                                {errors?.password && <FieldError errors={[errors.password]} />}
+                            </Field>
+
+                            <DialogFooter>
+                                <Button type="submit" disabled={isSubmitting} className="w-full">
+                                    {isSubmitting ? "Creating user…" : <>Create User</>}
+                                </Button>
+                            </DialogFooter>
+                        </form>
+
+                    </>}
                 </div>
-                <DialogFooter>
-                    <Button className="w-full">Create User</Button>
-                </DialogFooter>
+
             </DialogContent>
         </Dialog>
     )

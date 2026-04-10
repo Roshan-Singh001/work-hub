@@ -1,4 +1,3 @@
-import { console } from "inspector";
 import * as authService from "../services/auth.service.js"
 
 export const register = async (req, res) => {
@@ -7,7 +6,8 @@ export const register = async (req, res) => {
     console.log("result: ", result);
     res.status(201).json(result)
   } catch (err) {
-    res.status(400).json({ message: err.message })
+    console.error("Error in register controller: ", err);
+    res.status(400).json({ message: "Internal server error" })
   }
 }
 
@@ -22,7 +22,7 @@ export const login = async (req, res) => {
 
     res.status(201).json({ message, id, role })
   } catch (err) {
-    res.status(400).json({ message: err.message })
+    res.status(400).json({ message: "Internal server error" })
   }
 }
 

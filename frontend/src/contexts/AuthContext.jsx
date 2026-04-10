@@ -1,15 +1,15 @@
 "use client"
 import { useState, createContext, useContext, useEffect } from "react"
-import { useRouter, usePathname  } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({children})=>{
     const router = useRouter();
-    const pathname = usePathname();
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [refreshAuth, setRefreshAuth] = useState(0);
 
     useEffect(() => {
       const checkAuth = async ()=>{
@@ -33,7 +33,11 @@ export const AuthProvider = ({children})=>{
         }
       }
       checkAuth();
-    }, [pathname]);
+    }, [refreshAuth]);
+
+    function refreshUser(){
+        setRefreshAuth(prev => prev + 1)
+    }
 
     async function logOut(){
         try {
@@ -52,7 +56,7 @@ export const AuthProvider = ({children})=>{
     
 
     return (
-        <AuthContext.Provider value={{userData, setUserData, loading, logOut}}>
+        <AuthContext.Provider value={{userData, setUserData, loading, logOut, refreshUser }}>
             {!loading && children}
         </AuthContext.Provider>
     )

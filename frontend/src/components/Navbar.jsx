@@ -56,7 +56,7 @@ export default function Navbar() {
 
     return (
         <nav
-            className={`fixed top-4 w-[70%] m-auto rounded-full left-0 right-0 border-b-2 border-white/30 z-50 bg-black transition-all duration-300 ${scrolled ? "border-b shadow-sm" : ""
+            className={`fixed top-4 w-[70%] m-auto rounded-full left-0 right-0 border-b-2 border-white/30 z-50 dark:bg-black transition-all duration-300 ${scrolled ? "border-b shadow-sm" : ""
                 }`}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

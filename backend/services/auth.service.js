@@ -102,6 +102,7 @@ export const register = async (req) => {
         last_name: data.lastName,
         email: data.email,
         password: hashedPassword,
+        phone: data.phone,
         role: "Client",
         status: "approved",
       }
@@ -112,7 +113,6 @@ export const register = async (req) => {
         client_id: user_id,
         org_name: data?.organization,
         country: data.country,
-        phone: data.phone
       }
     })
 

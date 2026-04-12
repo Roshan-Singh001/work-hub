@@ -241,7 +241,7 @@ function isAccessible(item, orgStatus) {
 }
 
 
-export function OrgSidebar({ ...props }) {
+export function FreelancerSidebar({ ...props }) {
   const { userData, loading, logOut } = useAuth();
 
   if (loading && !userData) {

@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext"
-import { useForm, Controller, useFormState } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 
@@ -418,9 +418,39 @@ export default function AdminDashboard() {
                                     <TableBody>
                                         {pendingRequests.map((r) => (
                                             <TableRow key={r.id}>
-                                                <TableCell className="pl-6">
-                                                    <p className="text-sm font-medium">{r.role === 'ORG_Owner' ? r.organization.org_name : r.first_name + ' ' + r.last_name}</p>
-                                                </TableCell>
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <TableCell className="pl-6 cursor-pointer">
+                                                            <div className="inline-block cursor-pointer hover:text-muted-foreground">
+                                                                <p className="text-sm font-medium">
+                                                                    {r.role === 'ORG_Owner'
+                                                                        ? r.organization.org_name
+                                                                        : r.first_name + ' ' + r.last_name}
+                                                                </p>
+                                                            </div>
+                                                        </TableCell>
+                                                    </DialogTrigger>
+
+                                                    <DialogContent className="sm:max-w-md">
+                                                        <DialogHeader>
+                                                            <DialogTitle>User Details</DialogTitle>
+                                                            <DialogDescription>View and manage user information.</DialogDescription>
+                                                        </DialogHeader>
+
+                                                        <div className="space-y-4 py-2">
+                                                            <div className="space-y-1.5">
+                                                                <h1>{userData?.name}</h1>
+                                                                <p className="text-sm text-muted-foreground">{userData?.email}</p>
+                                                                <p className="text-sm text-muted-foreground">{userData?.phone}</p>
+                                                                <p className="text-sm text-muted-foreground">{userData?.country}</p>
+
+                                                            </div>
+
+                                                        </div>
+
+                                                    </DialogContent>
+                                                </Dialog>
+
                                                 <TableCell>
                                                     <Badge
                                                         variant={r.role.includes("Freelancer") ? "outline" : "secondary"}
@@ -566,6 +596,7 @@ function AddUserDialog() {
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                credentials: "include",
                 signal: AbortSignal.timeout(60000),
             })
             const json = await res.json()
@@ -573,11 +604,10 @@ function AddUserDialog() {
                 toast.error(json.message || "User Creation failed")
             } else {
                 toast.success(json.message);
-                onSuccess?.(json)
             }
         } catch (err) {
             console.error("User creation error: ", err);
-            toast.error(json.message || "User Creation failed")
+            toast.error("User Creation failed")
         }
     }
 

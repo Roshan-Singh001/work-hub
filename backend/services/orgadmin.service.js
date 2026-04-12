@@ -2,7 +2,7 @@ import { prisma } from "../config/db.ts"
 import { v4 as uuidv4 } from "uuid"
 import bcrypt from "bcrypt"
 
-export const getOverviewStats = async () => {
+export const getOverviewStats = async (data) => {
     const totalUsers = await prisma.user.count();
     const totalOrgs = await prisma.organization.count();
     const totalProjects = await prisma.project.count();
@@ -110,61 +110,5 @@ export const getOverviewStats = async () => {
         pendingRequests,
     }
 
-
-}
-
-export const approveRequest = async (userId) => {
-    await prisma.user.update({
-        where: { id: userId },
-        data: { status: 'Approved' }
-    })
-}
-
-export const rejectRequest = async (userId) => {
-    await prisma.user.update({
-        where: { id: userId },
-        data: { status: 'Rejected' }
-    })
-}
-
-export const addUser = async (userData, role) => {
-    console.log("Adding user with data: ", userData, " and role: ", role);
-    const hashedPassword = await bcrypt.hash(userData.password, 10)
-    if (role == 'admin') {
-        const user_id = 'admin_' + uuidv4().replaceAll("-", "_");
-        await prisma.admin.create({
-            data: {
-                id: user_id,
-                name: userData.name,
-                password: hashedPassword,
-                email: userData.email,
-                phone: userData.phone,
-            }
-        })
-    }
-    else if (role == 'client') {
-        const user_id = 'user_' + uuidv4().replaceAll("-", "_");
-
-        await prisma.user.create({
-            data: {
-                id: user_id,
-                first_name: userData.firstName,
-                last_name: userData.lastName,
-                email: userData.email,
-                password: hashedPassword,
-                phone: userData.phone,
-                role: "Client",
-                status: "approved",
-            }
-        })
-
-        await prisma.client.create({
-            data: {
-                client_id: user_id,
-                org_name: userData?.organization,
-                country: userData.country,
-            }
-        })
-    }
 
 }

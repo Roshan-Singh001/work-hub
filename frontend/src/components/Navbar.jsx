@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
+import { useAuth } from "@/contexts/AuthContext"
 import {
     NavigationMenu,
     NavigationMenuContent,
@@ -23,6 +24,9 @@ import {
     Zap,
     ChevronRight,
     ArrowUpRight,
+    User,
+    LogOut,
+    LayoutDashboard,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -30,6 +34,8 @@ export default function Navbar() {
     const [scrolled, setScrolled] = useState(false)
     const [mobileOpen, setMobileOpen] = useState(false)
     const [mobileHireOpen, setMobileHireOpen] = useState(false)
+    const [showNav, setShowNav] = useState(true)
+    const { userData, logout } = useAuth();
 
     const hireTalentLinks = [
         {
@@ -49,22 +55,40 @@ export default function Navbar() {
     ]
 
     useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 20)
+        let lastScrollY = window.scrollY
+
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY
+
+            setScrolled(currentScrollY > 20)
+
+            if (currentScrollY > lastScrollY && currentScrollY > 80) {
+                setShowNav(false)
+            } else {
+                setShowNav(true)
+            }
+
+            lastScrollY = currentScrollY
+        }
+
         window.addEventListener("scroll", handleScroll)
         return () => window.removeEventListener("scroll", handleScroll)
     }, [])
 
+
     return (
         <nav
-            className={`fixed top-4 w-[70%] m-auto rounded-full left-0 right-0 border-b-2 border-white/30 z-50 dark:bg-black transition-all duration-300 ${scrolled ? "border-b shadow-sm" : ""
-                }`}
+            className={`fixed top-4 w-[70%] m-auto rounded-full left-0 right-0 border-b-2 border-white/30 z-50 dark:bg-transparent transition-all duration-300
+                ${scrolled ? "border-b shadow-sm" : ""}
+                ${showNav ? "translate-y-0 opacity-100" : "-translate-y-10 opacity-0"}
+            `}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
 
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2">
-                        <Zap className="w-5 h-5" />
+                        {/* <Zap className="w-5 h-5" /> */}
                         <span className="text-xl font-bold tracking-tight">
                             Work<span className="text-muted-foreground">Hub</span>
                         </span>
@@ -85,7 +109,7 @@ export default function Navbar() {
 
                                 <NavigationMenuItem>
                                     <NavigationMenuLink asChild>
-                                        <Link href="/find-work" className="inline-flex h-9 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none cursor-pointer" passHref>
+                                        <Link href="/work" className="inline-flex h-9 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none cursor-pointer" passHref>
                                             Find Work
                                         </Link>
                                     </NavigationMenuLink>
@@ -95,6 +119,7 @@ export default function Navbar() {
                                     <NavigationMenuTrigger className="text-sm font-medium bg-transparent">
                                         Hire Talent
                                     </NavigationMenuTrigger>
+
                                     <NavigationMenuContent>
                                         <div className="w-[320px] p-3">
                                             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2 pb-2">
@@ -111,11 +136,7 @@ export default function Navbar() {
                                                                         <span className="text-sm font-medium">
                                                                             {label}
                                                                         </span>
-                                                                        {badge && (
-                                                                            <Badge variant="secondary" className="text-[10px] py-0 px-1.5 h-4">
-                                                                                {badge}
-                                                                            </Badge>
-                                                                        )}
+
                                                                     </div>
                                                                     <p className="text-xs text-muted-foreground mt-0.5">
                                                                         {description}
@@ -127,15 +148,6 @@ export default function Navbar() {
                                                     </li>
                                                 ))}
                                             </ul>
-                                            <Separator className="my-2" />
-                                            <div className="px-2 py-1">
-                                                <p className="text-xs text-muted-foreground">
-                                                    Not sure?{" "}
-                                                    <Link href="/hire/guide" className="font-medium text-foreground underline-offset-4 hover:underline">
-                                                        See hiring guide →
-                                                    </Link>
-                                                </p>
-                                            </div>
                                         </div>
                                     </NavigationMenuContent>
                                 </NavigationMenuItem>
@@ -146,12 +158,51 @@ export default function Navbar() {
 
                     {/* Desktop Auth */}
                     <div className="hidden lg:flex items-center gap-2">
-                        <Link href="/auth/login">
-                            <Button variant="ghost" size="sm">Log in</Button>
-                        </Link>
-                        <Link href="/auth/register">
-                            <Button size="sm">Sign up</Button>
-                        </Link>
+                        {userData ? (
+                            <>
+                                <NavigationMenu>
+                                    <NavigationMenuList>
+                                        <NavigationMenuItem>
+                                            <NavigationMenuTrigger className="py-6 px-4 rounded-full hover:bg-accent">
+                                                <User className="h-5 w-5" />
+                                            </NavigationMenuTrigger>
+
+                                            <NavigationMenuContent>
+                                                <div className="w-40 p-2">
+                                                    <NavigationMenuLink asChild>
+                                                        <Link 
+                                                            href={userData.role === 'Admin' ? '/admin/dashboard' : userData.role === "Client" ? '/client/dashboard' : userData.role === "ORG_Owner" ? '/orgs/admin/dashboard' : '/orgs/member/dashboard'} 
+                                                            className="flex flex-row items-center gap-2 px-3 py-2 rounded-md hover:bg-accent">
+                                                            <LayoutDashboard className="h-5 w-5" />
+                                                            Dashboard
+                                                        </Link>
+                                                    </NavigationMenuLink>
+
+                                                    <div className="mt-1">
+                                                        <button
+                                                            onClick={logout}
+                                                            className="flex gap-2 items-center w-full text-left px-3 py-2 rounded-md hover:bg-accent"
+                                                        >
+                                                            <LogOut className="h-5 w-5" />
+                                                            Log out
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </NavigationMenuContent>
+                                        </NavigationMenuItem>
+                                    </NavigationMenuList>
+                                </NavigationMenu>
+                            </>
+                        ) :
+                            <>
+                                <Link href="/auth/login">
+                                    <Button variant="ghost" size="sm">Log in</Button>
+                                </Link>
+                                <Link href="/auth/register">
+                                    <Button size="sm">Sign up</Button>
+                                </Link>
+                            </>
+                        }
                     </div>
 
                     {/* Mobile Hamburger */}
@@ -172,7 +223,7 @@ export default function Navbar() {
                                             className="flex items-center gap-2"
                                             onClick={() => setMobileOpen(false)}
                                         >
-                                            <Zap className="w-5 h-5" />
+                                            {/* <Zap className="w-5 h-5" /> */}
                                             <span className="text-lg font-bold">
                                                 Work<span className="text-muted-foreground">Hub</span>
                                             </span>
@@ -191,7 +242,7 @@ export default function Navbar() {
                                         </Link>
 
                                         <Link
-                                            href="/find-work"
+                                            href="/work"
                                             onClick={() => setMobileOpen(false)}
                                             className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium hover:bg-accent transition-colors"
                                         >

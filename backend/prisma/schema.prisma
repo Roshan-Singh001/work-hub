@@ -18,6 +18,13 @@ enum ROLE {
   Freelancer
 }
 
+enum ORG_ROLE {
+  Owner
+  Admin
+  Manager
+  Member
+}
+
 enum Visibility {
   ORG
   FREELANCER
@@ -51,7 +58,7 @@ model User {
   organizationId       String?
 
   role                 ROLE 
-  status               String  @default("pending")     
+  status               String  @default("Pending")     
 
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
@@ -82,9 +89,15 @@ model Organization {
 
 model Org_member {
   id String @id @default(uuid())
-  memberId User @relation(fields: [id], references: [id])
+
+  userId String @unique
+  user User @relation(fields: [userId], references: [id])
   organizationId String
-  local_role String
+
+  role ORG_ROLE @default(Member)
+  status String @default("active")
+  jobTitle String?
+  jobDescription String? @db.Text
 
   createdAt DateTime @default(now())
 }

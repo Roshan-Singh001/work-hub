@@ -77,7 +77,7 @@ const data = {
   navMain: [
     {
       title: "Overview",
-      url: "/org/dashboard",
+      url: "/orgs/admin/dashboard",
       icon: House,
     },
     {
@@ -86,10 +86,10 @@ const data = {
       icon: Briefcase,
       requiresApproval: true,
       items: [
-        { title: "All Projects",        url: "/org/dashboard/projects/all" },
-        { title: "Active Projects",     url: "/org/dashboard/projects/active" },
-        { title: "Completed Projects",  url: "/org/dashboard/projects/completed" },
-        { title: "Drafts",              url: "/org/dashboard/projects/drafts" },
+        { title: "All Projects",        url: "/orgs/admin/dashboard/projects/all" },
+        { title: "Active Projects",     url: "/orgs/admin/dashboard/projects/active" },
+        { title: "Completed Projects",  url: "/orgs/admin/dashboard/projects/completed" },
+        { title: "Drafts",              url: "/orgs/admin/dashboard/projects/drafts" },
       ],
     },
     {
@@ -98,9 +98,9 @@ const data = {
       icon: ClipboardList,
       requiresApproval: true,
       items: [
-        { title: "My Tasks",    url: "/org/dashboard/tasks/my" },
-        { title: "Team Tasks",  url: "/org/dashboard/tasks/team" },
-        { title: "Deadlines",   url: "/org/dashboard/tasks/deadlines" },
+        { title: "My Tasks",    url: "/orgs/admin/dashboard/tasks/my" },
+        { title: "Team Tasks",  url: "/orgs/admin/dashboard/tasks/team" },
+        { title: "Deadlines",   url: "/orgs/admin/dashboard/tasks/deadlines" },
       ],
     },
     {
@@ -109,9 +109,9 @@ const data = {
       icon: Users,
       requiresApproval: true,
       items: [
-        { title: "All Members",          url: "/org/dashboard/team/members" },
-        { title: "Roles & Permissions",  url: "/org/dashboard/team/roles" },
-        { title: "Invitations",          url: "/org/dashboard/team/invitations" },
+        { title: "All Members",          url: "/orgs/admin/dashboard/team/members" },
+        // { title: "Roles & Permissions",  url: "/org/dashboard/team/roles" },
+        // { title: "Invitations",          url: "/org/dashboard/team/invitations" },
       ],
     },
     {
@@ -120,9 +120,9 @@ const data = {
       icon: Handshake,
       requiresApproval: true,
       items: [
-        { title: "All Clients",     url: "/org/dashboard/clients/all" },
-        { title: "Active Clients",  url: "/org/dashboard/clients/active" },
-        { title: "Client Requests", url: "/org/dashboard/clients/requests" },
+        { title: "All Clients",     url: "/orgs/admin/dashboard/clients/all" },
+        { title: "Active Clients",  url: "/orgs/admin/dashboard/clients/active" },
+        { title: "Client Requests", url: "/orgs/admin/dashboard/clients/requests" },
       ],
     },
     {
@@ -131,9 +131,9 @@ const data = {
       icon: MessageSquare,
       requiresApproval: true,
       items: [
-        { title: "Inbox",       url: "/org/dashboard/messages/inbox" },
-        { title: "Team Chat",   url: "/org/dashboard/messages/team" },
-        { title: "Client Chat", url: "/org/dashboard/messages/clients" },
+        { title: "Inbox",       url: "/orgs/admin/dashboard/messages/inbox" },
+        { title: "Team Chat",   url: "/orgs/admin/dashboard/messages/team" },
+        { title: "Client Chat", url: "/orgs/admin/dashboard/messages/clients" },
       ],
     },
     {
@@ -142,8 +142,8 @@ const data = {
       icon: FolderOpen,
       requiresApproval: true,
       items: [
-        { title: "Project Files", url: "/org/dashboard/files/projects" },
-        { title: "Shared Files",  url: "/org/dashboard/files/shared" },
+        { title: "Project Files", url: "/orgs/admin/dashboard/files/projects" },
+        { title: "Shared Files",  url: "/orgs/admin/dashboard/files/shared" },
       ],
     },
     {
@@ -152,9 +152,9 @@ const data = {
       icon: DollarSign,
       requiresApproval: true,
       items: [
-        { title: "Earnings",     url: "/org/dashboard/finance/earnings" },
-        { title: "Transactions", url: "/org/dashboard/finance/transactions" },
-        { title: "Invoices",     url: "/org/dashboard/finance/invoices" },
+        { title: "Earnings",     url: "/orgs/admin/dashboard/finance/earnings" },
+        { title: "Transactions", url: "/orgs/admin/dashboard/finance/transactions" },
+        { title: "Invoices",     url: "/orgs/admin/dashboard/finance/invoices" },
       ],
     },
     // {
@@ -174,8 +174,8 @@ const data = {
       icon: Megaphone,
       requiresApproval: true,
       items: [
-        { title: "Admin Updates",    url: "/org/dashboard/announcements/admin" },
-        { title: "Internal Notices", url: "/org/dashboard/announcements/internal" },
+        { title: "Admin Updates",    url: "/orgs/admin/dashboard/announcements/admin" },
+        { title: "Internal Notices", url: "/orgs/admin/dashboard/announcements/internal" },
       ],
     },
     {
@@ -185,23 +185,23 @@ const data = {
       items: [
         {
           title: "Organization Profile",
-          url: "/org/dashboard/settings/profile",
+          url: "/orgs/admin/dashboard/settings/profile",
         },
         {
-          title: "Billing",
-          url: "/org/dashboard/settings/billing",
+          title: "General",
+          url: "/orgs/admin/dashboard/settings/general",
           requiresApproval: true,
         },
-        {
-          title: "Security",
-          url: "/org/dashboard/settings/security",
-          requiresApproval: true,
-        },
-        {
-          title: "Danger Zone",
-          url: "/org/dashboard/settings/danger",
-          requiresApproval: true,
-        },
+        // {
+        //   title: "Billing",
+        //   url: "/orgs/admin/dashboard/settings/billing",
+        //   requiresApproval: true,
+        // },
+        // {
+        //   title: "Danger Zone",
+        //   url: "/orgs/admin/dashboard/settings/danger",
+        //   requiresApproval: true,
+        // },
       ],
     },
   ],
@@ -216,7 +216,7 @@ const STATUS_CONFIG = {
     lockTooltip: "Available after admin approval",
     hint: "Your application is under review. Full access unlocks once approved.",
   },
-  rejected: {
+  Rejected: {
     label: "Not Approved",
     icon: XCircle,
     badgeClass:
@@ -224,7 +224,7 @@ const STATUS_CONFIG = {
     lockTooltip: "Account not approved. Contact support.",
     hint: "Contact support to resubmit.",
   },
-  approved: {
+  Approved: {
     label: "Approved",
     icon: CheckCircle2,
     badgeClass:
@@ -236,7 +236,7 @@ const STATUS_CONFIG = {
 
 
 function isAccessible(item, orgStatus) {
-  if (orgStatus === "approved") return true;
+  if (orgStatus === "Active") return true;
   return !item.requiresApproval;
 }
 
@@ -248,8 +248,7 @@ export function OrgSidebar({ ...props }) {
     return <div>Loading...</div>;
   }
 
-  // Expect userData.status: "pending" | "approved" | "rejected"
-  const orgStatus = userData?.status ?? "pending";
+  const orgStatus = userData?.status || "Pending";
 
   const user = {
     name: userData?.name || "Org Admin",
@@ -269,7 +268,7 @@ export function OrgSidebar({ ...props }) {
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
                 <span className="truncate font-medium">{user.orgName}</span>
-                <span className="truncate text-xs">Admin</span>
+                <span className="truncate text-xs">Owner</span>
                 
               </div>
             </SidebarMenuItem>
@@ -368,7 +367,6 @@ function NavItem({ item, accessible, isActive, pathname, orgStatus }) {
     );
   }
 
-  // ── Accessible, no sub-items (e.g. Overview) ─────────────────────────────
   if (!item.items) {
     return (
       <SidebarMenuItem>
@@ -385,7 +383,7 @@ function NavItem({ item, accessible, isActive, pathname, orgStatus }) {
     );
   }
 
-  // ── Accessible, has sub-items (sub-items may themselves be locked) ────────
+
   return (
     <Collapsible
       asChild

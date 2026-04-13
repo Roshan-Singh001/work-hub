@@ -101,244 +101,245 @@ export default function OrgAdminDashboard() {
                 </div>
 
                 {/* Pending Review */}
-                <PendingOrgCard />
-                <RejectedOrgCard />
+                {userData?.status === "Pending" && <PendingOrgCard />}
 
+                {userData?.status === "Rejected" && <RejectedOrgCard />}
+                {userData?.status === "Active" && <>
+                    {/* Stat Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <StatCard
+                            icon={FolderOpen}
+                            label="Total Projects"
+                            value={stats?.totalProjects}
+                        />
+                        <StatCard
+                            icon={ClipboardList}
+                            label="Total Tasks"
+                            value={stats?.totalTasks}
 
-                {/* Stat Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <StatCard
-                        icon={FolderOpen}
-                        label="Total Projects"
-                        value={stats?.totalProjects}
-                    />
-                    <StatCard
-                        icon={ClipboardList}
-                        label="Total Tasks"
-                        value={stats?.totalTasks}
+                        />
+                        <StatCard
+                            icon={Users}
+                            label="Team Members"
+                            value={stats?.teamMembers}
 
-                    />
-                    <StatCard
-                        icon={Users}
-                        label="Team Members"
-                        value={stats?.teamMembers}
+                        />
+                        <StatCard
+                            icon={Handshake}
+                            label="Active Clients"
+                            value={stats?.activeClients}
 
-                    />
-                    <StatCard
-                        icon={Handshake}
-                        label="Active Clients"
-                        value={stats?.activeClients}
+                        />
+                        <StatCard
+                            icon={DollarSign}
+                            label="Total Earnings"
+                            value={stats?.totalEarnings != null ? `₹${Number(stats.totalEarnings).toLocaleString("en-IN")}` : "₹ 0"}
+                            highlight
+                        />
+                    </div>
 
-                    />
-                    <StatCard
-                        icon={DollarSign}
-                        label="Total Earnings"
-                        value={stats?.totalEarnings != null ? `₹${Number(stats.totalEarnings).toLocaleString("en-IN")}` : "₹ 0"}
-                        highlight
-                    />
-                </div>
+                    {/* Project Status Overview */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-                {/* Project Status Overview */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        {/* Status Breakdown */}
+                        <Card className="lg:col-span-1">
+                            <CardHeader className="pb-3">
+                                <CardTitle className="text-base">Project Status</CardTitle>
+                                <CardDescription className="text-xs">Breakdown across all projects</CardDescription>
+                            </CardHeader>
+                            <Separator />
+                            <CardContent className="pt-4 space-y-4">
+                                <StatusBar
+                                    label="Active"
+                                    count={stats?.activeProjects ?? 0}
+                                    total={stats?.totalProjects ?? 1}
+                                    colorClass="bg-blue-500"
+                                    icon={<CircleDot className="h-3 w-3 text-blue-500" />}
+                                />
+                                <StatusBar
+                                    label="Completed"
+                                    count={stats?.completedProjects ?? 0}
+                                    total={stats?.totalProjects ?? 1}
+                                    colorClass="bg-green-500"
+                                    icon={<CheckCircle2 className="h-3 w-3 text-green-500" />}
+                                />
+                                <StatusBar
+                                    label="Delayed"
+                                    count={stats?.delayedProjects ?? 0}
+                                    total={stats?.totalProjects ?? 1}
+                                    colorClass="bg-red-500"
+                                    icon={<AlertTriangle className="h-3 w-3 text-red-500" />}
+                                />
+                                <StatusBar
+                                    label="Draft"
+                                    count={stats?.draftProjects ?? 0}
+                                    total={stats?.totalProjects ?? 1}
+                                    colorClass="bg-muted-foreground"
+                                    icon={<Briefcase className="h-3 w-3 text-muted-foreground" />}
+                                />
+                            </CardContent>
+                        </Card>
 
-                    {/* Status Breakdown */}
-                    <Card className="lg:col-span-1">
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-base">Project Status</CardTitle>
-                            <CardDescription className="text-xs">Breakdown across all projects</CardDescription>
-                        </CardHeader>
-                        <Separator />
-                        <CardContent className="pt-4 space-y-4">
-                            <StatusBar
-                                label="Active"
-                                count={stats?.activeProjects ?? 0}
-                                total={stats?.totalProjects ?? 1}
-                                colorClass="bg-blue-500"
-                                icon={<CircleDot className="h-3 w-3 text-blue-500" />}
-                            />
-                            <StatusBar
-                                label="Completed"
-                                count={stats?.completedProjects ?? 0}
-                                total={stats?.totalProjects ?? 1}
-                                colorClass="bg-green-500"
-                                icon={<CheckCircle2 className="h-3 w-3 text-green-500" />}
-                            />
-                            <StatusBar
-                                label="Delayed"
-                                count={stats?.delayedProjects ?? 0}
-                                total={stats?.totalProjects ?? 1}
-                                colorClass="bg-red-500"
-                                icon={<AlertTriangle className="h-3 w-3 text-red-500" />}
-                            />
-                            <StatusBar
-                                label="Draft"
-                                count={stats?.draftProjects ?? 0}
-                                total={stats?.totalProjects ?? 1}
-                                colorClass="bg-muted-foreground"
-                                icon={<Briefcase className="h-3 w-3 text-muted-foreground" />}
-                            />
-                        </CardContent>
-                    </Card>
+                        {/* Recent Project Updates */}
+                        <Card className="lg:col-span-2">
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <CardTitle className="text-base">Recent Project Updates</CardTitle>
+                                        <CardDescription className="text-xs mt-0.5">Latest activity across your projects</CardDescription>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-xs h-7 gap-1"
+                                        onClick={() => router.push("/org/dashboard/projects/all")}
+                                    >
+                                        View all <ArrowRight className="h-3 w-3" />
+                                    </Button>
+                                </div>
+                            </CardHeader>
 
-                    {/* Recent Project Updates */}
-                    <Card className="lg:col-span-2">
+                            {recentProjects.length === 0 ? (
+                                <CardContent className="h-52 flex items-center justify-center text-muted-foreground">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Briefcase className="h-8 w-8" />
+                                        <p className="text-sm font-medium">No recent projects</p>
+                                        <p className="text-xs">Project updates will appear here.</p>
+                                    </div>
+                                </CardContent>
+                            ) : (
+                                <CardContent className="p-0">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="pl-6 text-xs">Project</TableHead>
+                                                <TableHead className="text-xs">Client</TableHead>
+                                                <TableHead className="text-xs">Progress</TableHead>
+                                                <TableHead className="pr-6 text-xs">Status</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {recentProjects.map((p) => (
+                                                <TableRow key={p.id}>
+                                                    <TableCell className="pl-6">
+                                                        <p className="text-sm font-medium max-w-40 truncate">{p.title}</p>
+                                                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                                            <Clock className="h-2.5 w-2.5" />
+                                                            {new Date(p.updatedAt).toLocaleDateString("en-US", {
+                                                                day: "numeric",
+                                                                month: "short",
+                                                            })}
+                                                        </p>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <span className="text-xs text-muted-foreground">{p.client}</span>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-2 min-w-20">
+                                                            <Progress value={p.progress ?? 0} className="h-1.5 flex-1" />
+                                                            <span className="text-xs text-muted-foreground w-8 shrink-0">{p.progress ?? 0}%</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="pr-6">
+                                                        <ProjectStatusBadge status={p.status} />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            )}
+                        </Card>
+                    </div>
+
+                    {/* Upcoming Deadlines */}
+                    <Card>
                         <CardHeader>
                             <div className="flex items-center justify-between">
-                                <div>
-                                    <CardTitle className="text-base">Recent Project Updates</CardTitle>
-                                    <CardDescription className="text-xs mt-0.5">Latest activity across your projects</CardDescription>
+                                <div className="flex items-center gap-2">
+                                    <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                                    <div>
+                                        <CardTitle className="text-base">Upcoming Deadlines</CardTitle>
+                                        <CardDescription className="text-xs mt-0.5">
+                                            Tasks &amp; projects due today or this week
+                                        </CardDescription>
+                                    </div>
                                 </div>
                                 <Button
                                     variant="ghost"
                                     size="sm"
                                     className="text-xs h-7 gap-1"
-                                    onClick={() => router.push("/org/dashboard/projects/all")}
+                                    onClick={() => router.push("/org/dashboard/tasks/deadlines")}
                                 >
                                     View all <ArrowRight className="h-3 w-3" />
                                 </Button>
                             </div>
                         </CardHeader>
 
-                        {recentProjects.length === 0 ? (
-                            <CardContent className="h-52 flex items-center justify-center text-muted-foreground">
-                                <div className="flex flex-col items-center gap-2">
-                                    <Briefcase className="h-8 w-8" />
-                                    <p className="text-sm font-medium">No recent projects</p>
-                                    <p className="text-xs">Project updates will appear here.</p>
+                        <CardContent className="p-0">
+                            {upcomingDeadlines.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
+                                    <CalendarDays className="h-8 w-8" />
+                                    <p className="text-sm font-medium">No upcoming deadlines</p>
+                                    <p className="text-xs">You're all clear for now.</p>
                                 </div>
-                            </CardContent>
-                        ) : (
-                            <CardContent className="p-0">
+                            ) : (
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead className="pl-6 text-xs">Project</TableHead>
-                                            <TableHead className="text-xs">Client</TableHead>
-                                            <TableHead className="text-xs">Progress</TableHead>
-                                            <TableHead className="pr-6 text-xs">Status</TableHead>
+                                            <TableHead className="pl-6 text-xs">Item</TableHead>
+                                            <TableHead className="text-xs">Type</TableHead>
+                                            <TableHead className="text-xs">Assigned To</TableHead>
+                                            <TableHead className="text-xs">Due</TableHead>
+                                            <TableHead className="pr-6 text-xs">Urgency</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {recentProjects.map((p) => (
-                                            <TableRow key={p.id}>
+                                        {upcomingDeadlines.map((item) => (
+                                            <TableRow key={item.id}>
                                                 <TableCell className="pl-6">
-                                                    <p className="text-sm font-medium max-w-40 truncate">{p.title}</p>
-                                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                                        <Clock className="h-2.5 w-2.5" />
-                                                        {new Date(p.updatedAt).toLocaleDateString("en-US", {
+                                                    <p className="text-sm font-medium max-w-52 truncate">{item.title}</p>
+                                                    {item.projectName && (
+                                                        <p className="text-xs text-muted-foreground truncate max-w-52">
+                                                            {item.projectName}
+                                                        </p>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline" className="text-xs capitalize">
+                                                        {item.type === "task" ? (
+                                                            <><ClipboardList className="h-3 w-3 mr-1" /> Task</>
+                                                        ) : (
+                                                            <><Briefcase className="h-3 w-3 mr-1" /> Project</>
+                                                        )}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {item.assignedTo || "—"}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                                        <Timer className="h-2.5 w-2.5" />
+                                                        {new Date(item.dueDate).toLocaleDateString("en-US", {
                                                             day: "numeric",
                                                             month: "short",
+                                                            year: "numeric",
                                                         })}
-                                                    </p>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <span className="text-xs text-muted-foreground">{p.client}</span>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center gap-2 min-w-20">
-                                                        <Progress value={p.progress ?? 0} className="h-1.5 flex-1" />
-                                                        <span className="text-xs text-muted-foreground w-8 shrink-0">{p.progress ?? 0}%</span>
-                                                    </div>
+                                                    </span>
                                                 </TableCell>
                                                 <TableCell className="pr-6">
-                                                    <ProjectStatusBadge status={p.status} />
+                                                    <UrgencyBadge dueDate={item.dueDate} />
                                                 </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
                                 </Table>
-                            </CardContent>
-                        )}
+                            )}
+                        </CardContent>
                     </Card>
-                </div>
-
-                {/* Upcoming Deadlines */}
-                <Card>
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                                <div>
-                                    <CardTitle className="text-base">Upcoming Deadlines</CardTitle>
-                                    <CardDescription className="text-xs mt-0.5">
-                                        Tasks &amp; projects due today or this week
-                                    </CardDescription>
-                                </div>
-                            </div>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-xs h-7 gap-1"
-                                onClick={() => router.push("/org/dashboard/tasks/deadlines")}
-                            >
-                                View all <ArrowRight className="h-3 w-3" />
-                            </Button>
-                        </div>
-                    </CardHeader>
-
-                    <CardContent className="p-0">
-                        {upcomingDeadlines.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2">
-                                <CalendarDays className="h-8 w-8" />
-                                <p className="text-sm font-medium">No upcoming deadlines</p>
-                                <p className="text-xs">You're all clear for now.</p>
-                            </div>
-                        ) : (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="pl-6 text-xs">Item</TableHead>
-                                        <TableHead className="text-xs">Type</TableHead>
-                                        <TableHead className="text-xs">Assigned To</TableHead>
-                                        <TableHead className="text-xs">Due</TableHead>
-                                        <TableHead className="pr-6 text-xs">Urgency</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {upcomingDeadlines.map((item) => (
-                                        <TableRow key={item.id}>
-                                            <TableCell className="pl-6">
-                                                <p className="text-sm font-medium max-w-52 truncate">{item.title}</p>
-                                                {item.projectName && (
-                                                    <p className="text-xs text-muted-foreground truncate max-w-52">
-                                                        {item.projectName}
-                                                    </p>
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline" className="text-xs capitalize">
-                                                    {item.type === "task" ? (
-                                                        <><ClipboardList className="h-3 w-3 mr-1" /> Task</>
-                                                    ) : (
-                                                        <><Briefcase className="h-3 w-3 mr-1" /> Project</>
-                                                    )}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="text-xs text-muted-foreground">
-                                                    {item.assignedTo || "—"}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                                    <Timer className="h-2.5 w-2.5" />
-                                                    {new Date(item.dueDate).toLocaleDateString("en-US", {
-                                                        day: "numeric",
-                                                        month: "short",
-                                                        year: "numeric",
-                                                    })}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="pr-6">
-                                                <UrgencyBadge dueDate={item.dueDate} />
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        )}
-                    </CardContent>
-                </Card>
+                </>}
 
             </div>
         </div>

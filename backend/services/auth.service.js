@@ -23,6 +23,7 @@ export const register = async (req) => {
     const file_path = req?.file.path;
     const orgId = 'org_' + uuidv4().replaceAll("-", "_");
     const user_id = 'user_' + uuidv4().replaceAll("-", "_");
+    const mem_id = 'mem_' + uuidv4().replaceAll("-", "_");
     const uploaded_url = await uploadDoc(file_path, "org");
 
     await prisma.user.create({
@@ -33,6 +34,7 @@ export const register = async (req) => {
         email: data.email,
         password: hashedPassword,
         role: "ORG_Owner",
+        status: "Pending",
         phone: data.phone,
         organizationId: orgId
       }
@@ -54,9 +56,11 @@ export const register = async (req) => {
 
     await prisma.org_member.create({
       data: {
-        id: user_id,
+        id: mem_id,
+        userId: user_id,
         organizationId: orgId,
-        local_role: "Owner",
+        role: "Owner",
+        status: "Active",
       }
     })
 
@@ -104,7 +108,7 @@ export const register = async (req) => {
         password: hashedPassword,
         phone: data.phone,
         role: "Client",
-        status: "approved",
+        status: "Active",
       }
     })
 

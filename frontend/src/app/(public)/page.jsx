@@ -132,9 +132,9 @@ const scenarios = [
 // Stats
 const stats = [
   { value: "5", label: "System Roles" },
-  { value: "3", label: "Plan Tiers" },
   { value: "6+", label: "Core Modules" },
-  { value: "∞", label: "Scalability" },
+  { value: "100%", label: "RBAC Control " },
+  { value: "0", label: "Setup Complexity" },
 ];
 
 // Plans

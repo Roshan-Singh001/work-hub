@@ -85,7 +85,7 @@ export const getOverviewStats = async () => {
             role: {
                 in: ['ORG_Owner', 'Freelancer']
             },
-            status: 'pending'
+            status: 'Pending'
         },
         orderBy: {
             createdAt: 'desc'
@@ -116,7 +116,7 @@ export const getOverviewStats = async () => {
 export const approveRequest = async (userId) => {
     await prisma.user.update({
         where: { id: userId },
-        data: { status: 'Approved' }
+        data: { status: 'Active' }
     })
 }
 
@@ -154,7 +154,7 @@ export const addUser = async (userData, role) => {
                 password: hashedPassword,
                 phone: userData.phone,
                 role: "Client",
-                status: "approved",
+                status: "Active",
             }
         })
 

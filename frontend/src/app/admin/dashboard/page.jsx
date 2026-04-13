@@ -122,7 +122,7 @@ export default function AdminDashboard() {
     const handleUserAction = (id, action) => {
         setRecentUsers(prev =>
             prev.map(u =>
-                u.id === id ? { ...u, status: action === "approve" ? "Active" : "Banned" } : u
+                u.id === id ? { ...u, status: action === "Active" ? "Active" : "Banned" } : u
             )
         )
     }
@@ -279,37 +279,37 @@ export default function AdminDashboard() {
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end">
 
-                                                                {u.status === 'pending' && <DropdownMenuItem
+                                                                {u.status === 'Pending' && <DropdownMenuItem
                                                                     className="text-xs gap-2"
-                                                                    onClick={() => handleUserAction(u.id, "approve")}
+                                                                    onClick={() => handleUserAction(u.id, "Active")}
                                                                 >
                                                                     <CheckCircle className="h-3.5 w-3.5" /> Approve
                                                                 </DropdownMenuItem>}
 
-                                                                {u.status === 'pending' && <DropdownMenuItem
+                                                                {u.status === 'Pending' && <DropdownMenuItem
                                                                     className="text-xs gap-2"
-                                                                    onClick={() => handleUserAction(u.id, "reject")}
+                                                                    onClick={() => handleUserAction(u.id, "Rejected")}
                                                                 >
                                                                     <CircleX className="h-3.5 w-3.5" /> Reject
                                                                 </DropdownMenuItem>}
 
-                                                                {u.status === 'active' && <DropdownMenuItem
+                                                                {u.status === 'Active' && <DropdownMenuItem
                                                                     className="text-xs gap-2"
-                                                                    onClick={() => handleUserAction(u.id, "suspend")}
+                                                                    onClick={() => handleUserAction(u.id, "Suspend")}
                                                                 >
                                                                     <CircleAlert className="h-3.5 w-3.5" /> Suspend
                                                                 </DropdownMenuItem>}
 
-                                                                {(u.status === 'active' || u.status === 'suspend') && <DropdownMenuItem
+                                                                {(u.status === 'Active' || u.status === 'Suspend') && <DropdownMenuItem
                                                                     className="text-xs gap-2 text-destructive focus:text-destructive"
-                                                                    onClick={() => handleUserAction(u.id, "ban")}
+                                                                    onClick={() => handleUserAction(u.id, "Banned")}
                                                                 >
                                                                     <Ban className="h-3.5 w-3.5" /> Ban
                                                                 </DropdownMenuItem>}
 
-                                                                {(u.status === 'suspend' || u.status === 'banned') && <DropdownMenuItem
+                                                                {(u.status === 'Suspend' || u.status === 'Banned') && <DropdownMenuItem
                                                                     className="text-xs gap-2"
-                                                                    onClick={() => handleUserAction(u.id, "active")}
+                                                                    onClick={() => handleUserAction(u.id, "Active")}
                                                                 >
                                                                     <RotateCw className="h-3.5 w-3.5" /> Reactivate
                                                                 </DropdownMenuItem>}
@@ -788,7 +788,7 @@ function AddProjectDialog() {
                         <Select>
                             <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="Active">Active</SelectItem>
                                 <SelectItem value="pending">Pending</SelectItem>
                                 <SelectItem value="completed">Completed</SelectItem>
                             </SelectContent>

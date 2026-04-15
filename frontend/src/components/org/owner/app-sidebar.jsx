@@ -26,6 +26,7 @@ import {
   XCircle,
   CheckCircle2,
   AlertTriangle,
+  Lightbulb,
 } from "lucide-react"
 
 import {
@@ -89,7 +90,6 @@ const data = {
         { title: "All Projects",        url: "/orgs/admin/dashboard/projects/all" },
         { title: "Active Projects",     url: "/orgs/admin/dashboard/projects/active" },
         { title: "Completed Projects",  url: "/orgs/admin/dashboard/projects/completed" },
-        { title: "Drafts",              url: "/orgs/admin/dashboard/projects/drafts" },
       ],
     },
     {
@@ -100,7 +100,6 @@ const data = {
       items: [
         { title: "My Tasks",    url: "/orgs/admin/dashboard/tasks/my" },
         { title: "Team Tasks",  url: "/orgs/admin/dashboard/tasks/team" },
-        { title: "Deadlines",   url: "/orgs/admin/dashboard/tasks/deadlines" },
       ],
     },
     {
@@ -110,8 +109,6 @@ const data = {
       requiresApproval: true,
       items: [
         { title: "All Members",          url: "/orgs/admin/dashboard/team/members" },
-        // { title: "Roles & Permissions",  url: "/org/dashboard/team/roles" },
-        // { title: "Invitations",          url: "/org/dashboard/team/invitations" },
       ],
     },
     {
@@ -122,7 +119,6 @@ const data = {
       items: [
         { title: "All Clients",     url: "/orgs/admin/dashboard/clients/all" },
         { title: "Active Clients",  url: "/orgs/admin/dashboard/clients/active" },
-        { title: "Client Requests", url: "/orgs/admin/dashboard/clients/requests" },
       ],
     },
     {
@@ -131,32 +127,32 @@ const data = {
       icon: MessageSquare,
       requiresApproval: true,
       items: [
-        { title: "Inbox",       url: "/orgs/admin/dashboard/messages/inbox" },
         { title: "Team Chat",   url: "/orgs/admin/dashboard/messages/team" },
         { title: "Client Chat", url: "/orgs/admin/dashboard/messages/clients" },
       ],
     },
     {
-      title: "Files",
+      title: "Opportunities",
       url: "#",
-      icon: FolderOpen,
+      icon: Lightbulb,
       requiresApproval: true,
       items: [
-        { title: "Project Files", url: "/orgs/admin/dashboard/files/projects" },
-        { title: "Shared Files",  url: "/orgs/admin/dashboard/files/shared" },
+        { title: "Browse Projects", url: "/work" },
+        { title: "My Proposals",  url: "/orgs/admin/dashboard/proposals" },
+        { title: "Incoming Offers",  url: "/orgs/admin/dashboard/offers" },
       ],
     },
-    {
-      title: "Finance",
-      url: "#",
-      icon: DollarSign,
-      requiresApproval: true,
-      items: [
-        { title: "Earnings",     url: "/orgs/admin/dashboard/finance/earnings" },
-        { title: "Transactions", url: "/orgs/admin/dashboard/finance/transactions" },
-        { title: "Invoices",     url: "/orgs/admin/dashboard/finance/invoices" },
-      ],
-    },
+    // {
+    //   title: "Finance",
+    //   url: "#",
+    //   icon: DollarSign,
+    //   requiresApproval: true,
+    //   items: [
+    //     { title: "Earnings",     url: "/orgs/admin/dashboard/finance/earnings" },
+    //     { title: "Transactions", url: "/orgs/admin/dashboard/finance/transactions" },
+    //     { title: "Invoices",     url: "/orgs/admin/dashboard/finance/invoices" },
+    //   ],
+    // },
     // {
     //   title: "Analytics",
     //   url: "#",
@@ -192,16 +188,6 @@ const data = {
           url: "/orgs/admin/dashboard/settings/general",
           requiresApproval: true,
         },
-        // {
-        //   title: "Billing",
-        //   url: "/orgs/admin/dashboard/settings/billing",
-        //   requiresApproval: true,
-        // },
-        // {
-        //   title: "Danger Zone",
-        //   url: "/orgs/admin/dashboard/settings/danger",
-        //   requiresApproval: true,
-        // },
       ],
     },
   ],

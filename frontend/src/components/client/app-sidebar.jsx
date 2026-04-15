@@ -94,15 +94,19 @@ const data = {
       items: [
         {
           title: "All Projects",
-          url: "/client/dashboard/projects/all",
+          url: "/client/dashboard/project/all",
         },
         {
           title: "Active Projects",
-          url: "/client/dashboard/projects/active",
+          url: "/client/dashboard/project/active",
         },
         {
           title: "Completed Projects",
-          url: "/client/dashboard/projects/completed",
+          url: "/client/dashboard/project/completed",
+        },
+        {
+          title: "Create Project",
+          url: "/client/dashboard/project/create",
         },
       ],
     },
@@ -197,7 +201,7 @@ export function AppSidebar({ ...props }) {
 
 
   const user = {
-    name: userData?.name || "Admin",
+    name: userData?.name || "Client",
     email: userData?.email || "Not provided",
     avatar: "/avatars/admin.svg",
   }

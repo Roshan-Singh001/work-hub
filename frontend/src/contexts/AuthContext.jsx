@@ -10,6 +10,7 @@ export const AuthProvider = ({children})=>{
     const [userData, setUserData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [refreshAuth, setRefreshAuth] = useState(0);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
       const checkAuth = async ()=>{
@@ -21,12 +22,20 @@ export const AuthProvider = ({children})=>{
             })
 
             const data = await res.json();
-            setUserData(data.user);
+
+            if(!res.ok){
+                setUserData(null);
+                setIsLoggedIn(false);
+            }
+            else {
+                setUserData(data.user);
+                setIsLoggedIn(true);
+            }
             
         } catch (error) {
             console.error("Error verifying auth:", error);
-            
             setUserData(null);
+            setIsLoggedIn(false);
         }
         finally{
             setLoading(false);
@@ -56,7 +65,7 @@ export const AuthProvider = ({children})=>{
     
 
     return (
-        <AuthContext.Provider value={{userData, setUserData, loading, logOut, refreshUser }}>
+        <AuthContext.Provider value={{userData, setUserData, loading, logOut, refreshUser, isLoggedIn }}>
             {!loading && children}
         </AuthContext.Provider>
     )

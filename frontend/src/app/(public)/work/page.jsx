@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,9 +32,8 @@ import {
   UserRound,
   Building2,
   CheckCheck,
-  Search
-
-
+  Search,
+  Lock,
 
 } from "lucide-react";
 
@@ -193,14 +194,235 @@ const ORG_LOGO_COLORS = [
   "bg-teal-100 text-teal-700 dark:bg-teal-900 dark:text-teal-300",
 ];
 
+export default function FindWork() {
+  const { userData, isLoggedIn } = useAuth();
+  const auth = MOCK_AUTH;
+
+  const [search, setSearch] = useState("");
+  const [targetFilter, setTargetFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const visibleJobs = useMemo(() => {
+    return JOBS.filter((job) => {
+      if (userData?.role === "Freelancer") {
+        return job.targetType === "freelancer" || job.targetType === "both";
+      }
+      if (userData?.role === "ORG_Owner") {
+        return job.targetType === "organization" || job.targetType === "both";
+      }
+      return true;
+    });
+  }, [isLoggedIn, userData]);
+
+  const Ic = TARGET_CONFIG[targetFilter]?.icon;
+
+  const filteredJobs = useMemo(() => {
+    return visibleJobs.filter((job) => {
+      const q = search.toLowerCase();
+      const matchesSearch =
+        !q ||
+        job.title.toLowerCase().includes(q) ||
+        job.skills.some((s) => s.toLowerCase().includes(q)) ||
+        job.postedBy.toLowerCase().includes(q) ||
+        job.category.toLowerCase().includes(q);
+
+      const matchesTarget =
+        targetFilter === "all" || job.targetType === targetFilter;
+
+      const matchesCategory =
+        categoryFilter === "all" || job.category === categoryFilter;
+
+      return matchesSearch && matchesTarget && matchesCategory;
+    });
+  }, [visibleJobs, search, targetFilter, categoryFilter]);
+
+  const allCategories = [...new Set(JOBS.map((j) => j.category))];
+
+  function handleViewDetails(job) {
+    setSelectedJob(job);
+    setDialogOpen(true);
+  }
+
+
+  return (
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+      <Navbar />
+
+      <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 rounded-full bg-indigo-500/5 blur-[120px]" />
+
+      {/* ── Top Section ── */}
+      <div className="mt-24 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="max-w-6xl mx-auto px-6 md:px-10 pt-12 pb-8">
+
+          {/* Heading */}
+          <div className="mb-8">
+            
+            <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-zinc-900 dark:text-zinc-100 leading-tight">
+              Find Work
+            </h1>
+            <p className="mt-2 text-zinc-500 dark:text-zinc-400 text-sm font-light max-w-lg">
+              Browse projects from verified organizations.
+              {isLoggedIn && userData?.role && (
+                <span className="ml-1">
+                  Showing jobs open for{" "}
+                  <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                    {userData?.role === "Freelancer" ? "Freelancers" : "Organizations"}
+                  </span>
+                  .
+                </span>
+              )}
+            </p>
+          </div>
+
+          {/* Search + Filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {/* Search */}
+            <div className="relative flex-1">
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500 pointer-events-none"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <Input
+                placeholder="Search by title, skill, or company..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10 rounded-none border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-500 h-10 text-sm"
+              />
+            </div>
+
+            {/* Target Type Filter */}
+            <Select value={targetFilter} onValueChange={setTargetFilter}>
+              <SelectTrigger className="w-full sm:w-48 rounded-none border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 h-10 text-sm focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500">
+                <SelectValue placeholder="Target Type" />
+              </SelectTrigger>
+              <SelectContent className="rounded-none border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                <SelectItem value="all" className="text-sm">All Types</SelectItem>
+                {( !isLoggedIn || userData?.role === "Freelancer") && <SelectItem value="freelancer" className="text-sm">Freelancers</SelectItem>}
+                {( !isLoggedIn || userData?.role === "ORG_Owner") && <SelectItem value="organization" className="text-sm">Organizations</SelectItem>}
+                {(!isLoggedIn || (userData?.role === "Freelancer" || userData?.role === "ORG_Owner")) && <SelectItem value="both" className="text-sm">Both</SelectItem>}
+              </SelectContent>
+            </Select>
+
+            {/* Category Filter */}
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full sm:w-48 rounded-none border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 h-10 text-sm focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent className="rounded-none border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                <SelectItem value="all" className="text-sm">All Categories</SelectItem>
+                {allCategories.map((cat) => (
+                  <SelectItem key={cat} value={cat} className="text-sm">
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Active filter chips */}
+          {(targetFilter !== "all" || categoryFilter !== "all" || search) && (
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className="text-xs text-zinc-400 dark:text-zinc-500 font-mono uppercase tracking-widest">
+                Active:
+              </span>
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="flex items-center gap-1.5 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2.5 py-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  "{search}" <span className="text-zinc-400">×</span>
+                </button>
+              )}
+              {targetFilter !== "all" && (
+                <button
+                  onClick={() => setTargetFilter("all")}
+                  className="flex items-center gap-1.5 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2.5 py-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  {<Ic />} {TARGET_CONFIG[targetFilter]?.label}{" "}
+                  <span className="text-zinc-400">×</span>
+                </button>
+              )}
+              {categoryFilter !== "all" && (
+                <button
+                  onClick={() => setCategoryFilter("all")}
+                  className="flex items-center gap-1.5 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2.5 py-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                >
+                  {categoryFilter} <span className="text-zinc-400">×</span>
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setSearch("");
+                  setTargetFilter("all");
+                  setCategoryFilter("all");
+                }}
+                className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline underline-offset-2 transition-colors"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Results count bar */}
+        <div className="max-w-6xl mx-auto px-6 md:px-10 pb-4">
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 font-mono">
+            {filteredJobs.length} job{filteredJobs.length !== 1 ? "s" : ""} found
+            {filteredJobs.length !== visibleJobs.length &&
+              ` · ${visibleJobs.length} visible to you`}
+          </p>
+        </div>
+      </div>
+
+      {/* ── Job Grid ── */}
+      <main className="max-w-6xl mx-auto px-6 md:px-10 py-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filteredJobs.length === 0 ? (
+            <EmptyState query={search} />
+          ) : (
+            filteredJobs.map((job, i) => (
+              <JobCard
+                key={job.id}
+                job={job}
+                index={i}
+                auth={userData}
+                onViewDetails={handleViewDetails}
+              />
+            ))
+          )}
+        </div>
+      
+      </main>
+
+      {/* ── Detail Dialog ── */}
+      <JobDetailDialog
+        job={selectedJob}
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        auth={userData}
+      />
+    </div>
+  );
+}
+
 // Apply Button Logic 
 function getApplyState(job, auth) {
-  if (!auth.isLoggedIn) return { state: "login_required", label: "Login to Apply" };
-  if (!auth.userType) return { state: "login_required", label: "Login to Apply" };
+  if (!auth?.role) return { state: "login_required", label: "Login to Apply" };
 
   const canApply =
     job.targetType === "both" ||
-    job.targetType === auth.userType;
+    job.targetType === auth?.role.toLowerCase() === "freelancer" ? "freelancer" : auth?.role.toLowerCase() === "org_owner" ? "organization" : null;
 
   if (canApply) return { state: "can_apply", label: "Apply Now" };
   return { state: "wrong_type", label: "Apply Now" };
@@ -211,6 +433,7 @@ function JobCard({ job, onViewDetails, auth, index }) {
   const applyState = getApplyState(job, auth);
   const target = TARGET_CONFIG[job.targetType];
   const logoColor = ORG_LOGO_COLORS[index % ORG_LOGO_COLORS.length];
+  const router = useRouter();
 
   return (
     <article
@@ -313,7 +536,7 @@ function JobCard({ job, onViewDetails, auth, index }) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => onViewDetails(job)}
+          onClick={() => router.push(`/project/${job?.id}`)}
           className="rounded-none text-xs font-medium border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-500 transition-all"
         >
           View Details
@@ -339,7 +562,7 @@ function JobCard({ job, onViewDetails, auth, index }) {
                     }
                   }}
                 >
-                  {applyState.state === "login_required" ? "🔒 " : ""}
+                  {applyState.state === "login_required" ? <Lock/> : ""}
                   {applyState.label}
                 </Button>
               </span>
@@ -520,239 +743,3 @@ function EmptyState({ query }) {
   );
 }
 
-export default function FindWork() {
-  const auth = MOCK_AUTH;
-
-  const [search, setSearch] = useState("");
-  const [targetFilter, setTargetFilter] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  const visibleJobs = useMemo(() => {
-    return JOBS.filter((job) => {
-      if (auth.userType === "freelancer") {
-        return job.targetType === "freelancer" || job.targetType === "both";
-      }
-      if (auth.userType === "organization") {
-        return job.targetType === "organization" || job.targetType === "both";
-      }
-      return true;
-    });
-  }, [auth.userType]);
-
-  const Ic = TARGET_CONFIG[targetFilter]?.icon;
-
-  const filteredJobs = useMemo(() => {
-    return visibleJobs.filter((job) => {
-      const q = search.toLowerCase();
-      const matchesSearch =
-        !q ||
-        job.title.toLowerCase().includes(q) ||
-        job.skills.some((s) => s.toLowerCase().includes(q)) ||
-        job.postedBy.toLowerCase().includes(q) ||
-        job.category.toLowerCase().includes(q);
-
-      const matchesTarget =
-        targetFilter === "all" || job.targetType === targetFilter;
-
-      const matchesCategory =
-        categoryFilter === "all" || job.category === categoryFilter;
-
-      return matchesSearch && matchesTarget && matchesCategory;
-    });
-  }, [visibleJobs, search, targetFilter, categoryFilter]);
-
-  const allCategories = [...new Set(JOBS.map((j) => j.category))];
-
-  function handleViewDetails(job) {
-    setSelectedJob(job);
-    setDialogOpen(true);
-  }
-
-  const authBanner = !auth.isLoggedIn ? (
-    <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 px-6 py-3 flex items-center justify-between gap-4">
-      <p className="text-sm text-amber-800 dark:text-amber-300 flex items-center gap-2">
-        <span>🔒</span>
-        You can browse jobs as a guest. Log in to apply.
-      </p>
-      <Button
-        size="sm"
-        className="rounded-none bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs shrink-0"
-      >
-        Log In
-      </Button>
-    </div>
-  ) : null;
-
-  return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
-      <Navbar />
-
-      {/* ── Auth Banner ── */}
-      {authBanner}
-      <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 rounded-full bg-indigo-500/5 blur-[120px]" />
-
-      {/* ── Top Section ── */}
-      <div className="mt-24 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-6xl mx-auto px-6 md:px-10 pt-12 pb-8">
-
-          {/* Heading */}
-          <div className="mb-8">
-            
-            <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-zinc-900 dark:text-zinc-100 leading-tight">
-              Find Work
-            </h1>
-            <p className="mt-2 text-zinc-500 dark:text-zinc-400 text-sm font-light max-w-lg">
-              Browse projects from verified organizations.
-              {auth.isLoggedIn && auth.userType && (
-                <span className="ml-1">
-                  Showing jobs open for{" "}
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                    {auth.userType === "freelancer" ? "Freelancers" : "Organizations"}
-                  </span>
-                  .
-                </span>
-              )}
-            </p>
-          </div>
-
-          {/* Search + Filters */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
-            <div className="relative flex-1">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-500 pointer-events-none"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <Input
-                placeholder="Search by title, skill, or company..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10 rounded-none border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-400 dark:focus-visible:ring-zinc-500 h-10 text-sm"
-              />
-            </div>
-
-            {/* Target Type Filter */}
-            <Select value={targetFilter} onValueChange={setTargetFilter}>
-              <SelectTrigger className="w-full sm:w-48 rounded-none border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 h-10 text-sm focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500">
-                <SelectValue placeholder="Target Type" />
-              </SelectTrigger>
-              <SelectContent className="rounded-none border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-                <SelectItem value="all" className="text-sm">All Types</SelectItem>
-                <SelectItem value="freelancer" className="text-sm">Freelancers</SelectItem>
-                <SelectItem value="organization" className="text-sm">Organizations</SelectItem>
-                <SelectItem value="both" className="text-sm">Both</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Category Filter */}
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full sm:w-48 rounded-none border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 h-10 text-sm focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent className="rounded-none border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-                <SelectItem value="all" className="text-sm">All Categories</SelectItem>
-                {allCategories.map((cat) => (
-                  <SelectItem key={cat} value={cat} className="text-sm">
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Active filter chips */}
-          {(targetFilter !== "all" || categoryFilter !== "all" || search) && (
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-xs text-zinc-400 dark:text-zinc-500 font-mono uppercase tracking-widest">
-                Active:
-              </span>
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="flex items-center gap-1.5 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2.5 py-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                >
-                  "{search}" <span className="text-zinc-400">×</span>
-                </button>
-              )}
-              {targetFilter !== "all" && (
-                <button
-                  onClick={() => setTargetFilter("all")}
-                  className="flex items-center gap-1.5 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2.5 py-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                >
-                  {<Ic />} {TARGET_CONFIG[targetFilter]?.label}{" "}
-                  <span className="text-zinc-400">×</span>
-                </button>
-              )}
-              {categoryFilter !== "all" && (
-                <button
-                  onClick={() => setCategoryFilter("all")}
-                  className="flex items-center gap-1.5 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2.5 py-1 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                >
-                  {categoryFilter} <span className="text-zinc-400">×</span>
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  setSearch("");
-                  setTargetFilter("all");
-                  setCategoryFilter("all");
-                }}
-                className="text-xs text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 underline underline-offset-2 transition-colors"
-              >
-                Clear all
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Results count bar */}
-        <div className="max-w-6xl mx-auto px-6 md:px-10 pb-4">
-          <p className="text-xs text-zinc-400 dark:text-zinc-500 font-mono">
-            {filteredJobs.length} job{filteredJobs.length !== 1 ? "s" : ""} found
-            {filteredJobs.length !== visibleJobs.length &&
-              ` · ${visibleJobs.length} visible to you`}
-          </p>
-        </div>
-      </div>
-
-      {/* ── Job Grid ── */}
-      <main className="max-w-6xl mx-auto px-6 md:px-10 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredJobs.length === 0 ? (
-            <EmptyState query={search} />
-          ) : (
-            filteredJobs.map((job, i) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                index={i}
-                auth={auth}
-                onViewDetails={handleViewDetails}
-              />
-            ))
-          )}
-        </div>
-      
-      </main>
-
-      {/* ── Detail Dialog ── */}
-      <JobDetailDialog
-        job={selectedJob}
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        auth={auth}
-      />
-    </div>
-  );
-}

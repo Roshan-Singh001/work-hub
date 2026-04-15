@@ -26,6 +26,8 @@ import {
   XCircle,
   CheckCircle2,
   AlertTriangle,
+  Star,
+  Lightbulb,
 } from "lucide-react"
 
 import {
@@ -77,7 +79,7 @@ const data = {
   navMain: [
     {
       title: "Overview",
-      url: "/org/dashboard",
+      url: "/freelancer/dashboard",
       icon: House,
     },
     {
@@ -86,10 +88,9 @@ const data = {
       icon: Briefcase,
       requiresApproval: true,
       items: [
-        { title: "All Projects",        url: "/org/dashboard/projects/all" },
-        { title: "Active Projects",     url: "/org/dashboard/projects/active" },
-        { title: "Completed Projects",  url: "/org/dashboard/projects/completed" },
-        { title: "Drafts",              url: "/org/dashboard/projects/drafts" },
+        { title: "All Projects",        url: "/freelancer/dashboard/projects/all" },
+        { title: "Active Projects",     url: "/freelancer/dashboard/projects/active" },
+        { title: "Completed Projects",  url: "/freelancer/dashboard/projects/completed" },
       ],
     },
     {
@@ -98,31 +99,8 @@ const data = {
       icon: ClipboardList,
       requiresApproval: true,
       items: [
-        { title: "My Tasks",    url: "/org/dashboard/tasks/my" },
-        { title: "Team Tasks",  url: "/org/dashboard/tasks/team" },
-        { title: "Deadlines",   url: "/org/dashboard/tasks/deadlines" },
-      ],
-    },
-    {
-      title: "Team",
-      url: "#",
-      icon: Users,
-      requiresApproval: true,
-      items: [
-        { title: "All Members",          url: "/org/dashboard/team/members" },
-        { title: "Roles & Permissions",  url: "/org/dashboard/team/roles" },
-        { title: "Invitations",          url: "/org/dashboard/team/invitations" },
-      ],
-    },
-    {
-      title: "Clients",
-      url: "#",
-      icon: Handshake,
-      requiresApproval: true,
-      items: [
-        { title: "All Clients",     url: "/org/dashboard/clients/all" },
-        { title: "Active Clients",  url: "/org/dashboard/clients/active" },
-        { title: "Client Requests", url: "/org/dashboard/clients/requests" },
+        { title: "My Tasks",    url: "/freelancer/dashboard/tasks/my" },
+        { title: "Completed Tasks",  url: "/freelancer/dashboard/tasks/completed" },
       ],
     },
     {
@@ -131,51 +109,38 @@ const data = {
       icon: MessageSquare,
       requiresApproval: true,
       items: [
-        { title: "Inbox",       url: "/org/dashboard/messages/inbox" },
-        { title: "Team Chat",   url: "/org/dashboard/messages/team" },
-        { title: "Client Chat", url: "/org/dashboard/messages/clients" },
+        { title: "Org Chat",   url: "/freelancer/dashboard/messages/team" },
+        { title: "Client Chat", url: "/freelancer/dashboard/messages/clients" },
       ],
     },
     {
-      title: "Files",
+      title: "Opportunities",
       url: "#",
-      icon: FolderOpen,
+      icon: Lightbulb,
       requiresApproval: true,
       items: [
-        { title: "Project Files", url: "/org/dashboard/files/projects" },
-        { title: "Shared Files",  url: "/org/dashboard/files/shared" },
+        { title: "Browse Opportunities", url: "/work" },
+        { title: "My Applications",  url: "/freelancer/dashboard/opportunities/applications" },
+        { title: "Incoming Offers",  url: "/freelancer/dashboard/opportunities/offers" },
       ],
     },
     {
-      title: "Finance",
+      title: "Reviews",
       url: "#",
-      icon: DollarSign,
+      icon: Star,
       requiresApproval: true,
       items: [
-        { title: "Earnings",     url: "/org/dashboard/finance/earnings" },
-        { title: "Transactions", url: "/org/dashboard/finance/transactions" },
-        { title: "Invoices",     url: "/org/dashboard/finance/invoices" },
+        { title: "My Ratings", url: "/freelancer/dashboard/reviews/ratings" },
+        { title: "Feedback",  url: "/freelancer/dashboard/reviews/feedback" },
       ],
     },
-    // {
-    //   title: "Analytics",
-    //   url: "#",
-    //   icon: BarChart2,
-    //   requiresApproval: true,
-    //   items: [
-    //     { title: "Project Reports",  url: "/org/dashboard/analytics/projects" },
-    //     { title: "Team Performance", url: "/org/dashboard/analytics/team" },
-    //     { title: "Revenue",          url: "/org/dashboard/analytics/revenue" },
-    //   ],
-    // },
     {
       title: "Announcements",
       url: "#",
       icon: Megaphone,
       requiresApproval: true,
       items: [
-        { title: "Admin Updates",    url: "/org/dashboard/announcements/admin" },
-        { title: "Internal Notices", url: "/org/dashboard/announcements/internal" },
+        { title: "Admin Updates",    url: "/freelancer/dashboard/announcements" },
       ],
     },
     {
@@ -184,23 +149,12 @@ const data = {
       icon: Settings2,
       items: [
         {
-          title: "Organization Profile",
-          url: "/org/dashboard/settings/profile",
+          title: "Your Profile",
+          url: "/freelancer/dashboard/settings/profile",
         },
         {
-          title: "Billing",
-          url: "/org/dashboard/settings/billing",
-          requiresApproval: true,
-        },
-        {
-          title: "Security",
-          url: "/org/dashboard/settings/security",
-          requiresApproval: true,
-        },
-        {
-          title: "Danger Zone",
-          url: "/org/dashboard/settings/danger",
-          requiresApproval: true,
+          title: "General",
+          url: "/freelancer/dashboard/settings/general",
         },
       ],
     },
@@ -208,7 +162,7 @@ const data = {
 }
 
 const STATUS_CONFIG = {
-  pending: {
+  Pending: {
     label: "Pending Review",
     icon: Clock,
     badgeClass:
@@ -216,7 +170,7 @@ const STATUS_CONFIG = {
     lockTooltip: "Available after admin approval",
     hint: "Your application is under review. Full access unlocks once approved.",
   },
-  rejected: {
+  Rejected: {
     label: "Not Approved",
     icon: XCircle,
     badgeClass:
@@ -224,8 +178,8 @@ const STATUS_CONFIG = {
     lockTooltip: "Account not approved. Contact support.",
     hint: "Contact support to resubmit.",
   },
-  approved: {
-    label: "Approved",
+  Active: {
+    label: "Active",
     icon: CheckCircle2,
     badgeClass:
       "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300",
@@ -235,8 +189,8 @@ const STATUS_CONFIG = {
 }
 
 
-function isAccessible(item, orgStatus) {
-  if (orgStatus === "approved") return true;
+function isAccessible(item, status) {
+  if (status === "Active") return true;
   return !item.requiresApproval;
 }
 
@@ -249,12 +203,11 @@ export function FreelancerSidebar({ ...props }) {
   }
 
   // Expect userData.status: "pending" | "approved" | "rejected"
-  const orgStatus = userData?.status ?? "pending";
+  const Status = userData?.status ?? "Pending";
 
   const user = {
-    name: userData?.name || "Org Admin",
+    name: userData?.name || "Freelancer",
     email: userData?.email || "Not provided",
-    orgName: userData?.orgName || "My Organization",
   }
 
   return (
@@ -268,8 +221,8 @@ export function FreelancerSidebar({ ...props }) {
                 <img src="/favicon.ico" alt={user.orgName} className="h-4 w-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
-                <span className="truncate font-medium">{user.orgName}</span>
-                <span className="truncate text-xs">Admin</span>
+                <span className="truncate font-medium">Work Hub</span>
+                <span className="truncate text-xs">Freelancer</span>
                 
               </div>
             </SidebarMenuItem>
@@ -277,7 +230,7 @@ export function FreelancerSidebar({ ...props }) {
         </SidebarHeader>
 
         <SidebarContent>
-          <NavMain items={data.navMain} orgStatus={orgStatus} />
+          <NavMain items={data.navMain} status={Status} />
         </SidebarContent>
 
         <SidebarFooter>
@@ -291,8 +244,8 @@ export function FreelancerSidebar({ ...props }) {
 }
 
 
-function StatusBadge({ orgStatus }) {
-  const config = STATUS_CONFIG[orgStatus] ?? STATUS_CONFIG.pending;
+function StatusBadge({ status }) {
+  const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.Pending;
   const Icon = config.icon;
 
   return (
@@ -306,21 +259,21 @@ function StatusBadge({ orgStatus }) {
 }
 
 
-function NavMain({ items, orgStatus }) {
+function NavMain({ items, status }) {
   const pathname = usePathname();
-  const hint = STATUS_CONFIG[orgStatus]?.hint;
+  const hint = STATUS_CONFIG[status]?.hint;
 
   return (
     <SidebarGroup>
       {hint && (
         <SidebarGroupLabel className="flex flex-col gap-2 mb-6 items-start text-[11px] text-muted-foreground whitespace-normal leading-tight px-2 pb-2">
-          <StatusBadge orgStatus={orgStatus} />
+          <StatusBadge status={status} />
           {hint}
         </SidebarGroupLabel>
       )}
       <SidebarMenu>
         {items.map((item) => {
-          const accessible = isAccessible(item, orgStatus);
+          const accessible = isAccessible(item, status);
           const isActive =
             pathname === item.url ||
             item.items?.some((sub) => pathname.startsWith(sub.url));
@@ -332,7 +285,7 @@ function NavMain({ items, orgStatus }) {
               accessible={accessible}
               isActive={isActive}
               pathname={pathname}
-              orgStatus={orgStatus}
+              status={status}
             />
           );
         })}
@@ -342,8 +295,8 @@ function NavMain({ items, orgStatus }) {
 }
 
 
-function NavItem({ item, accessible, isActive, pathname, orgStatus }) {
-  const lockTooltip = STATUS_CONFIG[orgStatus]?.lockTooltip ?? "";
+function NavItem({ item, accessible, isActive, pathname, status }) {
+  const lockTooltip = STATUS_CONFIG[status]?.lockTooltip ?? "";
 
   if (!accessible) {
     return (
@@ -385,7 +338,6 @@ function NavItem({ item, accessible, isActive, pathname, orgStatus }) {
     );
   }
 
-  // ── Accessible, has sub-items (sub-items may themselves be locked) ────────
   return (
     <Collapsible
       asChild
@@ -404,7 +356,7 @@ function NavItem({ item, accessible, isActive, pathname, orgStatus }) {
         <CollapsibleContent>
           <SidebarMenuSub>
             {item.items.map((subItem) => {
-              const subAccessible = isAccessible(subItem, orgStatus);
+              const subAccessible = isAccessible(subItem, status);
 
               if (!subAccessible) {
                 return (

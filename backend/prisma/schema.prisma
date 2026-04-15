@@ -31,124 +31,172 @@ enum Visibility {
   BOTH
 }
 
+enum AssignedType {
+  FREELANCER
+  ORG
+}
+
+enum ProjectStatus {
+  OPEN
+  IN_PROGRESS
+  DELAYED
+  COMPLETED
+  CANCELLED
+}
+
 enum TaskType {
-  INTERNAL   
+  INTERNAL
   OUTSOURCED
 }
 
+enum ExperienceLevel {
+  BEGINNER
+  INTERMEDIATE
+  EXPERT
+}
 
+enum ProjectType {
+  FIXED
+  HOURLY
+}
 
 model Admin {
-  id String @id @default(uuid())
-  name String
-  email String @unique
+  id       String @id @default(uuid())
+  name     String
+  email    String @unique
   password String
-  phone String
+  phone    String
 
   createdAt DateTime @default(now())
 }
 
 model User {
-  id                   String   @id @default(uuid())
-  first_name           String
-  last_name            String
-  email                String   @unique
-  password             String
-  phone                String
-  organizationId       String?
+  id             String  @id @default(uuid())
+  first_name     String
+  last_name      String
+  email          String  @unique
+  password       String
+  phone          String
+  organizationId String?
 
-  role                 ROLE 
-  status               String  @default("Pending")     
+  role   ROLE
+  status String @default("Pending")
 
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  organization          Organization?
-  client                Client?
-  member                Org_member?
-  freelancer            Freelancer?
-  clientProjects        Project[] @relation("ClientProjects")
+  organization   Organization?
+  client         Client?
+  member         Org_member?
+  freelancer     Freelancer?
+  clientProjects Project[]     @relation("ClientProjects")
 }
 
 model Organization {
-  org_id        String  @id @default(uuid())
-  org_name      String
-  ownerId   String  @unique
-  owner     User    @relation(fields: [ownerId], references: [id])
+  org_id   String @id @default(uuid())
+  org_name String
+  ownerId  String @unique
+  owner    User   @relation(fields: [ownerId], references: [id])
 
-  size       String
-  country    String
-  industry   String
-  website    String?
+  size        String
+  country     String
+  industry    String
+  website     String?
   license_url String
-  org_phone      String?
-  org_email      String?
-  about      String @db.Text
-  createdAt DateTime @default(now())
+  org_phone   String?
+  org_email   String?
+  about       String   @db.Text
+  createdAt   DateTime @default(now())
 }
 
 model Org_member {
   id String @id @default(uuid())
 
-  userId String @unique
-  user User @relation(fields: [userId], references: [id])
+  userId         String @unique
+  user           User   @relation(fields: [userId], references: [id])
   organizationId String
 
-  role ORG_ROLE @default(Member)
-  status String @default("active")
-  jobTitle String?
-  jobDescription String? @db.Text
+  role           ORG_ROLE @default(Member)
+  status         String   @default("active")
+  jobTitle       String?
+  jobDescription String?  @db.Text
 
   createdAt DateTime @default(now())
 }
 
 model Client {
   client_id String @id @default(uuid())
-  user   User   @relation(fields: [client_id], references: [id])
+  user      User   @relation(fields: [client_id], references: [id])
 
   org_name String?
-  country String
+  country  String
 }
 
 model Freelancer {
   freelancer_id String @id @default(uuid())
-  user   User   @relation(fields: [freelancer_id], references: [id])
+  user          User   @relation(fields: [freelancer_id], references: [id])
 
-  title String
-  about String
-  country String
+  title           String
+  about           String
+  country         String
   skills_category String
-  resume_url String
+  resume_url      String
+}
+
+model Skill {
+  id   String @id @default(uuid())
+  name String @unique
+
+  projects Project[]
+}
+
+model Industry {
+  id   String @id @default(uuid())
+  name String @unique
+
+  projects Project[]
 }
 
 model Project {
-  project_id String @id @default(uuid())
-  title String
-  description String
-  assigned_to String
-  clientId String
+  project_id   String   @id @default(uuid())
+  title        String
+  shortDesc    String?
+  description  String   @db.Text
+  assignedToId String?
+  assignedAt   DateTime?
+  assignedType AssignedType?
+  clientId     String
 
   client User @relation("ClientProjects", fields: [clientId], references: [id])
 
-  visibility Visibility @default(BOTH)
-  status String @default("open")
-  budget Float
-  deadline DateTime
+  visibility Visibility    @default(BOTH)
+  status     ProjectStatus @default(OPEN)
+  minBudget  Float
+  maxBudget  Float
+  finalPrice Float?
+  deadline   DateTime
 
-  tasks ProjectTask[]
+  experienceLevel ExperienceLevel?
+  projectType ProjectType
+
+  industry Industry[]
+  skills   Skill[]
+  tasks    ProjectTask[]
+
+  startDate      DateTime?
+  completionDate DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-
 model ProjectTask {
-  task_id String @id @default(uuid())
-  title String
+  task_id     String @id @default(uuid())
+  title       String
   description String
 
   projectId String
-  project Project @relation(fields: [projectId], references: [project_id])
+  project   Project @relation(fields: [projectId], references: [project_id])
 
   assignments TaskAssignment[]
 
@@ -164,8 +212,8 @@ model TaskAssignment {
   taskId String
   userId String
 
-  role String?
-  status String @default("assigned")
+  role   String?
+  status String  @default("assigned")
 
   assignedAt DateTime @default(now())
 

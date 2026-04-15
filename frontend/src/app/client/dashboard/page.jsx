@@ -94,7 +94,7 @@ export default function ClientDashboard() {
                     <Button
                         size="sm"
                         className="gap-2 w-fit"
-                        onClick={() => router.push("/client/projects/new")}
+                        onClick={() => router.push("/client/dashboard/project/create")}
                     >
                         <FolderOpen className="h-4 w-4" /> Post a Project
                     </Button>

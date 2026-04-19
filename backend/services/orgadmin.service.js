@@ -38,7 +38,9 @@ export const getOverviewStats = async (data) => {
             title: true,
             createdAt: true,
             status: true,
-            budget: true,
+            minBudget: true,
+            maxBudget: true,
+            finalPrice: true,
             client: {
                 select: {
                     id: true,

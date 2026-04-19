@@ -1,6 +1,6 @@
 "use client"
-import { useState } from "react"
-import { useForm, Controller } from "react-hook-form"
+import { useState, useEffect } from "react"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 
@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/AuthContext"
 
 import {
     Building2, User, Briefcase, ArrowRight,
-    Upload, Globe, Phone, Mail, Lock, FileText, ShieldUser,
+    Mail, Lock, ShieldUser,
 } from "lucide-react"
 
 import { toast } from "sonner"
@@ -45,6 +45,11 @@ export default function Login() {
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
         resolver: zodResolver(accountSchema),
     })
+
+    useEffect(() => {
+      document.title = "Login - WorkHub";
+    }, [])
+    
 
     async function onSubmit(data) {
         console.log("Submitting login for role:", role, "with data:", data)

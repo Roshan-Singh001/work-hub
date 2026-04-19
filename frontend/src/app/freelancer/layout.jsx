@@ -1,6 +1,10 @@
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar"
 import { FreelancerSidebar } from "@/components/freelancer/app-sidebar"
 
+export const metadata = {
+  title: "WorkHub - Freelancer Dashboard",
+};
+
 export default function Layout({ children }) {
   return (
     <SidebarProvider>

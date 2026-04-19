@@ -1,6 +1,10 @@
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar"
 import { AppSidebar } from "@/components/client/app-sidebar"
 
+export const metadata = {
+  title: "WorkHub - Client Dashboard",
+};
+
 export default function Layout({ children }) {
   return (
     <SidebarProvider>

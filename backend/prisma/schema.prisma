@@ -26,14 +26,14 @@ enum ORG_ROLE {
 }
 
 enum Visibility {
-  ORG
+  ORGANIZATION
   FREELANCER
   BOTH
 }
 
 enum AssignedType {
   FREELANCER
-  ORG
+  ORGANIZATION
 }
 
 enum ProjectStatus {
@@ -68,6 +68,8 @@ model Admin {
   phone    String
 
   createdAt DateTime @default(now())
+
+  AdminAnnouncements AdminAnnouncement[]
 }
 
 model User {
@@ -89,12 +91,17 @@ model User {
   client         Client?
   member         Org_member?
   freelancer     Freelancer?
-  clientProjects Project[]     @relation("ClientProjects")
+  projectApplications   ProjectApplication[] @relation("FreelancerApplications")
+  taskApplications TaskApplication[]
+  reportsMade Report[]
+  reportsReceived Report[] @relation("ReportedUser")
+  feedbacks Feedback[]
 }
 
 model Organization {
   org_id   String @id @default(uuid())
   org_name String
+  org_logo_url String?
   ownerId  String @unique
   owner    User   @relation(fields: [ownerId], references: [id])
 
@@ -107,6 +114,12 @@ model Organization {
   org_email   String?
   about       String   @db.Text
   createdAt   DateTime @default(now())
+
+  rating Float @default(0)
+
+  members Org_member[]
+  orgApplications ProjectApplication[]
+  orgAnnouncements OrganizationAnnouncement[]
 }
 
 model Org_member {
@@ -122,25 +135,36 @@ model Org_member {
   jobDescription String?  @db.Text
 
   createdAt DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [org_id])
 }
 
 model Client {
   client_id String @id @default(uuid())
   user      User   @relation(fields: [client_id], references: [id])
+  client_dp_url String?
 
   org_name String?
   country  String
+  rating   Float  @default(0)
+
+  clientProjects Project[] @relation("ClientProjects")
 }
 
 model Freelancer {
   freelancer_id String @id @default(uuid())
   user          User   @relation(fields: [freelancer_id], references: [id])
+  freelancer_dp_url String?
 
   title           String
   about           String
   country         String
   skills_category String
+  skills          Skill[]
+  experience      String? @default("")
+  hourly_rate     Float? @default(0)
   resume_url      String
+  rating          Float  @default(0)
 }
 
 model Skill {
@@ -148,6 +172,7 @@ model Skill {
   name String @unique
 
   projects Project[]
+  freelancers Freelancer[]
 }
 
 model Industry {
@@ -167,7 +192,7 @@ model Project {
   assignedType AssignedType?
   clientId     String
 
-  client User @relation("ClientProjects", fields: [clientId], references: [id])
+  client Client @relation("ClientProjects", fields: [clientId], references: [client_id])
 
   visibility Visibility    @default(BOTH)
   status     ProjectStatus @default(OPEN)
@@ -185,9 +210,15 @@ model Project {
 
   startDate      DateTime?
   completionDate DateTime?
+  progress       Int      @default(0)
+  files          Json?
+
+  review String? @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  applications ProjectApplication[]
 }
 
 model ProjectTask {
@@ -201,9 +232,14 @@ model ProjectTask {
   assignments TaskAssignment[]
 
   status String @default("open")
+  progress Int    @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  review String? @db.Text
+
+  applications TaskApplication[]
 }
 
 model TaskAssignment {
@@ -218,4 +254,100 @@ model TaskAssignment {
   assignedAt DateTime @default(now())
 
   task ProjectTask @relation(fields: [taskId], references: [task_id])
+}
+
+enum ApplicantType {
+  FREELANCER
+  ORGANIZATION
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model ProjectApplication {
+  id String @id @default(uuid())
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [project_id])
+
+  freelancerId String?
+  freelancer   User? @relation("FreelancerApplications", fields: [freelancerId], references: [id])
+
+  orgId String?
+  organization Organization? @relation(fields: [orgId], references: [org_id])
+  applicantType ApplicantType
+
+  coverLetter String? @db.Text
+  proposedPrice Float
+  status       ApplicationStatus  @default(PENDING)
+  appliedAt DateTime @default(now())
+}
+
+model TaskApplication {
+  id String @id @default(uuid())
+
+  taskId String
+  task   ProjectTask @relation(fields: [taskId], references: [task_id])
+
+  freelancerId String
+  freelancer   User @relation(fields: [freelancerId], references: [id])
+
+  coverLetter   String? @db.Text
+  proposedPrice Float
+  status        ApplicationStatus @default(PENDING)
+
+  appliedAt DateTime @default(now())
+}
+
+model AdminAnnouncement {
+  id String @id @default(uuid())
+
+  adminId String
+  admin   Admin @relation(fields: [adminId], references: [id])
+
+  title String
+  content String @db.Text
+
+  createdAt DateTime @default(now())
+}
+
+model OrganizationAnnouncement {
+  id String @id @default(uuid())
+
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [org_id])
+
+  title String
+  content String @db.Text
+
+  createdAt DateTime @default(now())
+}
+
+model Report {
+  id String @id @default(uuid())
+
+  reporterId String
+  reporter   User @relation(fields: [reporterId], references: [id])
+
+  reportedUserId String
+  reportedUser   User @relation("ReportedUser", fields: [reportedUserId], references: [id])
+
+  reason String @db.Text
+  status String @default("open")
+
+  createdAt DateTime @default(now())
+}
+
+model Feedback {
+  id String @id @default(uuid())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id])
+
+  message String @db.Text
+
+  createdAt DateTime @default(now())
 }

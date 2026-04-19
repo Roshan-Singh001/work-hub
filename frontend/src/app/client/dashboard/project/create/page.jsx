@@ -1,14 +1,13 @@
 "use client"
 import { useState, useCallback } from "react"
 import {
-  ArrowLeft, Plus, X, Upload, Link2, FileText, Image as ImageIcon,
-  Github, Figma, HardDrive, ChevronDown, Briefcase, Clock,
+  Plus, X, Upload, FileText, Image as ImageIcon, Briefcase, Clock,
   Users, Building2, User, DollarSign, Calendar, Tag,
   Sparkles, Globe, Star, Layers, Info, CheckCircle2,
   AlertCircle, Trash2, ExternalLink, Paperclip, Bold,
   Italic, Underline, List, ListOrdered, Quote, Code2,
   Heading1, Heading2, AlignLeft, AlignCenter, Undo, Redo,
-  Type, Strikethrough, Link, Minus
+  Type, Strikethrough, Link, Minus, Edit2
 } from "lucide-react"
 import {
   Card, CardContent, CardHeader, CardTitle, CardDescription
@@ -22,24 +21,20 @@ import { Separator } from "@/components/ui/separator"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription
 } from "@/components/ui/dialog"
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
-} from "@/components/ui/select"
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import UnderlineExtension from "@tiptap/extension-underline"
 import LinkExtension from "@tiptap/extension-link"
-import {Placeholder} from "@tiptap/extensions"
+import { Placeholder } from "@tiptap/extensions"
+import Strike from "@tiptap/extension-strike"
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+import { toast } from "sonner"
+
 const INDUSTRIES = [
-  "Technology", "Healthcare", "Finance", "Education", "E-Commerce",
-  "Real Estate", "Media & Entertainment", "Manufacturing", "Logistics",
-  "Travel & Hospitality", "Legal", "Agriculture", "Energy", "Non-Profit",
+  "Software Development", "Design & Creative", "Healthcare", "Education", "E-Commerce",
+  "Media & Entertainment", "Manufacturing", "Writing & Content", "Data & Analytics",
+  "Other",
 ]
 
 const SKILLS_SUGGESTIONS = [
@@ -49,28 +44,22 @@ const SKILLS_SUGGESTIONS = [
 ]
 
 export default function CreateProjectPage() {
-  // Basic Info
   const [title, setTitle] = useState("")
   const [shortDesc, setShortDesc] = useState("")
   const [projectType, setProjectType] = useState("")
 
-  // Assignment
   const [assignedTo, setAssignedTo] = useState("")
 
-  // Freelancer fields
   const [skills, setSkills] = useState([])
   const [skillInput, setSkillInput] = useState("")
   const [experienceLevel, setExperienceLevel] = useState("")
 
-  // Organization fields
   const [industries, setIndustries] = useState([])
 
-  // Budget & Timeline
   const [minBudget, setMinBudget] = useState("")
   const [maxBudget, setMaxBudget] = useState("")
   const [deadline, setDeadline] = useState("")
 
-  // Detail Dialog
   const [detailDialogOpen, setDetailDialogOpen] = useState(false)
   const [detailData, setDetailData] = useState({ content: "", files: [], links: [] })
   const hasDetails = detailData.content && detailData.content !== "<p></p>" && detailData.content !== ""
@@ -94,15 +83,49 @@ export default function CreateProjectPage() {
     setIndustries(prev => prev.includes(ind) ? prev.filter(i => i !== ind) : [...prev, ind])
   }
 
-  function handleSubmit() {
-    const payload = {
-      title, shortDesc, projectType, assignedTo,
-      skills, experienceLevel, industries,
-      minBudget, maxBudget, deadline,
-      details: detailData,
+  async function handleSubmit() {
+    const formData = new FormData()
+
+    formData.append("title", title)
+    formData.append("shortDesc", shortDesc)
+    formData.append("projectType", projectType)
+    formData.append("assignedTo", assignedTo)
+    formData.append("experienceLevel", experienceLevel)
+    formData.append("minBudget", minBudget)
+    formData.append("maxBudget", maxBudget)
+    formData.append("deadline", deadline)
+
+
+    skills.forEach(skill => formData.append("skills", skill))
+    industries.forEach(ind => formData.append("industries", ind))
+
+    formData.append("details", JSON.stringify({
+      content: detailData.content
+    }))
+
+    detailData.files.forEach(file => {
+      formData.append("files", file) 
+    })
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/client/project/post`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        toast.error(result.message || "Failed")
+      } else {
+        toast.success("Project created successfully!")
+      }
+
+    } catch (error) {
+      console.error("Error submitting project:", error)
+      toast.error(error.message)
     }
-    console.log("Project payload:", payload)
-    // Submit logic here
   }
 
   const budgetError = minBudget && maxBudget && Number(minBudget) > Number(maxBudget)
@@ -120,7 +143,7 @@ export default function CreateProjectPage() {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {/* <Button variant="outline" size="sm" className="text-xs gap-1.5 h-8">Save Draft</Button> */}
-              <Button size="sm" className="text-xs gap-1.5 h-8" onClick={handleSubmit}>
+              <Button disabled={!title || !projectType || !assignedTo || budgetError} size="sm" className="text-xs gap-1.5 h-8" onClick={handleSubmit}>
                 <Sparkles className="h-3.5 w-3.5" /> Publish Project
               </Button>
             </div>
@@ -504,8 +527,8 @@ function EditorToolbar({ editor }) {
     {
       group: "history",
       items: [
-        { icon: Undo, action: () => editor.chain().focus().undo().run(), disabled: !editor.can().undo(), title: "Undo" },
-        { icon: Redo, action: () => editor.chain().focus().redo().run(), disabled: !editor.can().redo(), title: "Redo" },
+        { icon: Undo, action: () => editor.chain().focus().undo().run(), disabled: !editor.can().chain().focus().undo().run(), title: "Undo" },
+        { icon: Redo, action: () => editor.chain().focus().redo().run(), disabled: !editor.can().chain().focus().redo().run(), title: "Redo" },
       ]
     },
     {
@@ -567,17 +590,32 @@ function EditorToolbar({ editor }) {
 function ProjectDetailDialog({ open, onOpenChange, data, onSave }) {
   const [localFiles, setLocalFiles] = useState(data.files || [])
   const [dragActive, setDragActive] = useState(false)
+  const [refresh, setRefresh] = useState(false)
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        heading: { levels: [1, 2] },
+        bulletList: true,
+        orderedList: true,
+        blockquote: true,
+        code: true,
+        horizontalRule: true,
+      }),
       UnderlineExtension,
+      Strike,
       LinkExtension.configure({ openOnClick: false }),
       Placeholder.configure({ placeholder: "Write your full project description here. Include requirements, features, scope, and any other important details..." }),
     ],
     content: data.content || "",
     editorProps: {
-      attributes: { class: "prose prose-sm max-w-none focus:outline-none min-h-[220px] px-4 py-3 text-sm leading-relaxed" }
+      attributes: { class: "focus:outline-none min-h-[220px] px-4 py-3 text-sm leading-relaxed prose-ul:list-disc prose-ul:pl-5 prose-ol:list-decimal prose-ol:pl-5" }
+    },
+    onUpdate: () => {
+      setRefresh(prev => !prev);
+    },
+    onSelectionUpdate: () => {
+      setRefresh(prev => !prev);
     },
     immediatelyRender: false,
   })
@@ -599,6 +637,7 @@ function ProjectDetailDialog({ open, onOpenChange, data, onSave }) {
   }
 
   function handleSave() {
+    console.log("Saving details:", editor?.getHTML())
     onSave({ content: editor?.getHTML() || "", files: localFiles })
     onOpenChange(false)
   }

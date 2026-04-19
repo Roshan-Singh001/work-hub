@@ -1,5 +1,7 @@
 "use client"
 import { Separator } from "@/components/ui/separator";
+import Image from "next/image";
+import WorkHubLogo from "../../public/WorkHubLogo.png"
 
 export default function Footer() {
 
@@ -9,7 +11,10 @@ export default function Footer() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-16">
                     {/* Brand */}
                     <div className="col-span-2 md:col-span-1">
-                        <p className="text-xl font-black text-slate-900 dark:text-white tracking-tighter mb-3">WorkHub</p>
+                        <p className="flex gap-2 text-xl font-black text-slate-900 dark:text-white tracking-tighter mb-3">
+                            <Image src={WorkHubLogo} alt="WorkHub Logo" width={32} height={32} />
+                            <span>WorkHub</span>
+                        </p>
                         <p className="text-xs text-slate-500 dark:text-zinc-600 leading-relaxed font-light">
                             A controlled business operating system for teams, freelancers, and clients.
                         </p>

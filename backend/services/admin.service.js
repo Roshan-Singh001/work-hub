@@ -38,18 +38,27 @@ export const getOverviewStats = async () => {
             title: true,
             createdAt: true,
             status: true,
-            budget: true,
+            minBudget: true,
+            maxBudget: true,
             client: {
                 select: {
-                    id: true,
-                    first_name: true,
-                    last_name: true,
+                    client_id: true,
+                    user: {
+                        select: {
+                            first_name: true,
+                            last_name: true,
+                        }
+                    }
                 }
             }
         },
         where: {
             client: {
-                role: "Client"
+                user: {
+                    role: {
+                        in: ['Client']
+                    }
+                }
             }
         },
         orderBy: {

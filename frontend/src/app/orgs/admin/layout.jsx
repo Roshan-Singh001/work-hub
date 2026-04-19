@@ -1,6 +1,10 @@
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar"
 import { OrgSidebar } from "@/components/org/owner/app-sidebar"
 
+export const metadata = {
+  title: "WorkHub - Organization Dashboard",
+};
+
 export default function Layout({ children }) {
   return (
     <SidebarProvider>

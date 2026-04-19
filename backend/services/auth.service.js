@@ -155,7 +155,7 @@ export const login = async (data) =>{
 
   console.log("user: ",user);
 
-  if (!user) {
+  if (!user ) {
     throw new Error("Invalid email or role");
   }
 

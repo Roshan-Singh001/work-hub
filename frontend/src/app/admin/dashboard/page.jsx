@@ -119,6 +119,11 @@ export default function AdminDashboard() {
         fetchStats();
     }, [])
 
+    function formatBudget(n) {
+        if (n >= 100000) return `₹${(n / 100000).toFixed(n % 100000 === 0 ? 0 : 1)}L`;
+        return `₹${(n / 1000).toFixed(0)}K`;
+    }
+
     const handleUserAction = (id, action) => {
         setRecentUsers(prev =>
             prev.map(u =>
@@ -359,15 +364,15 @@ export default function AdminDashboard() {
                                         </TableHeader>
                                         <TableBody>
                                             {recentProjects.map((p) => (
-                                                <TableRow key={p.id}>
+                                                <TableRow key={p.project_id}>
                                                     <TableCell className="pl-6">
                                                         <p className="text-sm font-medium max-w-37.5 truncate">{p.title}</p>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <span className="text-xs text-muted-foreground">{p.client}</span>
+                                                        <span className="text-xs text-muted-foreground">{p.client.user.first_name} {p.client.user.last_name}</span>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <span className="text-xs font-medium">{p.budget}</span>
+                                                        <span className="text-xs font-medium">{formatBudget(p.minBudget)} - {formatBudget(p.maxBudget)}</span>
                                                     </TableCell>
                                                     <TableCell className="pr-6">
                                                         <StatusBadge status={p.status} />

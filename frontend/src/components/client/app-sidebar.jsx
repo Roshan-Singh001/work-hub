@@ -2,7 +2,8 @@
 
 import * as React from "react"
 import { usePathname } from "next/navigation";
-import { useEffect } from "react"
+import Image from "next/image";
+import WorkHubLogo from "../../../public/WorkHubLogo.png"
 import { useAuth } from "@/contexts/AuthContext"
 import {
   AudioWaveform,
@@ -211,8 +212,8 @@ export function AppSidebar({ ...props }) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className={'flex gap-3'}>
-            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-              <img src="/favicon.ico" alt="Work Hub" className="h-4 w-4" />
+            <div className="flex aspect-square items-center justify-center rounded-lg ">
+              <Image src={WorkHubLogo} alt="Work Hub" width={32} height={32} />
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">Work Hub</span>

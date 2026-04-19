@@ -2,8 +2,9 @@
 
 import * as React from "react"
 import { usePathname } from "next/navigation";
-import { useEffect } from "react"
 import { useAuth } from "@/contexts/AuthContext"
+import Image from "next/image";
+import WorkHubLogo from "../../../public/WorkHubLogo.png"
 import {
   AudioWaveform,
   BookOpen,
@@ -93,10 +94,6 @@ const data = {
       isActive: true,
       items: [
         {
-          title: "All Users",
-          url: "/admin/dashboard/users/all",
-        },
-        {
           title: "Organizations",
           url: "/admin/dashboard/users/orgs",
         },
@@ -109,8 +106,8 @@ const data = {
           url: "/admin/dashboard/users/clients",
         },
         {
-          title: "Banned Users",
-          url: "/admin/dashboard/users/banned",
+          title: "Suspended Users",
+          url: "/admin/dashboard/users/suspended",
         },
       ],
     },
@@ -119,10 +116,6 @@ const data = {
       url: "#",
       icon: Briefcase,
       items: [
-        {
-          title: "All Projects",
-          url: "/admin/dashboard/projects/all",
-        },
         {
           title: "Active Projects",
           url: "/admin/dashboard/projects/active",
@@ -142,10 +135,10 @@ const data = {
           title: "Announcements",
           url: "/admin/dashboard/messages/announcements",
         },
-        {
-          title: "Messages",
-          url: "/admin/dashboard/messages",
-        },
+        // {
+        //   title: "Messages",
+        //   url: "/admin/dashboard/messages",
+        // },
       ],
     },
     {
@@ -156,10 +149,6 @@ const data = {
         {
           title: "Reports",
           url: "/admin/dashboard/moderation/reports",
-        },
-        {
-          title: "Complaints",
-          url: "/admin/dashboard/moderation/complaints",
         },
         {
           title: "Feedback",
@@ -200,8 +189,8 @@ export function AppSidebar({ ...props }) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className={'flex gap-3'}>
-            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-              <img src="/favicon.ico" alt="Work Hub" className="h-4 w-4" />
+            <div className="flex aspect-square items-center justify-center rounded-lg ">
+              <Image src={WorkHubLogo} alt="Work Hub" width={32} height={32} />
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-medium">Work Hub</span>

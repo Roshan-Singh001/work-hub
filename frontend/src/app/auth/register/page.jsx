@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -391,12 +391,16 @@ function Freelancer({ onSuccess }) {
                                 <SelectValue placeholder="Select a category" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="dev">💻 Software Development</SelectItem>
-                                <SelectItem value="design">🎨 Design & Creative</SelectItem>
-                                <SelectItem value="marketing">📣 Marketing</SelectItem>
-                                <SelectItem value="writing">✍️ Writing & Content</SelectItem>
-                                <SelectItem value="data">📊 Data & Analytics</SelectItem>
-                                <SelectItem value="other">🔧 Other</SelectItem>
+                                <SelectItem value="Software Development">Software Development</SelectItem>
+                                <SelectItem value="Design & Creative">Design & Creative</SelectItem>
+                                <SelectItem value="Marketing">Marketing</SelectItem>
+                                <SelectItem value="Writing & Content">Writing & Content</SelectItem>
+                                <SelectItem value="Data & Analytics">Data & Analytics</SelectItem>
+                                <SelectItem value="Education">Education</SelectItem>
+                                <SelectItem value="Healthcare">Healthcare</SelectItem>
+                                <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                                <SelectItem value="Media & Entertainment">Media & Entertainment</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                         </Select>
                         {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -594,6 +598,9 @@ function Orgs({ onSuccess }) {
 export default function Register() {
     const [role, setRole] = useState("")
     const router = useRouter();
+    useEffect(() => {
+      document.title = "Register - WorkHub";
+    }, [])
 
     function handleSuccess(data) {
         console.log("Registered:", data);

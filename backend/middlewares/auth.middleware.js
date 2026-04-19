@@ -27,6 +27,14 @@ export const authorizeAdmin = (req, res, next) => {
   next();
 };
 
+export const authorizeClient = (req, res, next) => {
+  if (req.user.role !== "Client") {
+    return res.status(403).json({ message: "Access denied" });
+  }
+
+  next();
+};
+
 export const authorizeOrgAdmin = async (req, res, next) => {
   if (req.user.role !== "ORG_Owner"){
     return res.status(403).json({ message: "Access denied" });

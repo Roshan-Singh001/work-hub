@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, use, useEffect } from "react";
+import sanitizeHtml from "sanitize-html"
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -13,6 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import Footer from "@/components/Footer";
+import NotFound from "../not-found";
 import {
   Calendar,
   Clock,
@@ -48,73 +50,11 @@ import {
   RefreshCw,
   ArrowLeft,
 } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
 const MOCK_AUTH = {
   isLoggedIn: true,
   userType: "freelancer", // null | "freelancer" | "organization" | "client"
-};
-
-// ─── Mock Project Data (maps to Prisma model) ─────────────────────────────────
-const PROJECT = {
-  project_id: "proj_9f3a1b2c-4d5e-6f7a-8b9c-0d1e2f3a4b5c",
-  title: "AI-Powered Customer Support Chatbot",
-  description: `We are building an intelligent, multi-turn customer support chatbot for our B2B SaaS helpdesk platform. The system must handle thousands of concurrent sessions, support both Hindi and English, integrate deeply with our Freshdesk and Zendesk APIs, and escalate edge cases to human agents with full context handoff.
-
-The deliverable includes a production-ready backend with LangChain orchestration, a fine-tuned LLM layer (GPT-4o or equivalent), a React-based admin dashboard for monitoring conversations, full API documentation, deployment on AWS EKS, and 60 days of post-launch support.
-
-We expect clean, well-tested code with >80% test coverage, CI/CD pipelines already set up, and comprehensive handover documentation. NDA will be required before project kick-off.`,
-
-  // Client
-  client: {
-    id: "usr_client_001",
-    name: "Vikram Anand",
-    company: "TechVentures Pvt. Ltd.",
-    initials: "VA",
-    rating: 4.7,
-    projectsPosted: 14,
-    memberSince: "Jan 2023",
-  },
-
-  // Assignment (null if not yet assigned)
-  assignedToId: null,
-  assignedAt: null,
-  assignedType: null, // "FREELANCER" | "ORGANIZATION"
-
-  // Visibility
-  visibility: "BOTH", // "FREELANCER" | "ORGANIZATION" | "BOTH"
-
-  // Status
-  status: "OPEN", // "OPEN" | "IN_PROGRESS" | "UNDER_REVIEW" | "COMPLETED" | "CANCELLED"
-
-  // Budget
-  minBudget: 75000,
-  maxBudget: 150000,
-  finalPrice: null,
-
-  // Dates
-  deadline: "2025-07-15",
-  startDate: null,
-  completionDate: null,
-  createdAt: "2025-04-10T09:30:00Z",
-  updatedAt: "2025-04-12T14:15:00Z",
-
-  // Project specifics
-  experienceLevel: "EXPERT", // "BEGINNER" | "INTERMEDIATE" | "EXPERT"
-  projectType: "FIXED", // "FIXED" | "HOURLY"
-
-  // Relations
-  industry: ["SaaS", "Fintech", "Healthcare"],
-  skills: ["Python", "LangChain", "NLP", "React", "AWS", "Node.js", "PostgreSQL"],
-
-  // Tasks
-  tasks: [
-    { id: "t1", title: "Requirements & Architecture Design", status: "COMPLETED", priority: "HIGH" },
-    { id: "t2", title: "LLM Integration & Fine-tuning", status: "OPEN", priority: "HIGH" },
-    { id: "t3", title: "Freshdesk & Zendesk API Integration", status: "OPEN", priority: "HIGH" },
-    { id: "t4", title: "Admin Dashboard (React)", status: "OPEN", priority: "MEDIUM" },
-    { id: "t5", title: "AWS EKS Deployment & CI/CD", status: "OPEN", priority: "MEDIUM" },
-    { id: "t6", title: "Testing & Documentation", status: "OPEN", priority: "LOW" },
-  ],
 };
 
 const STATUS_CONFIG = {
@@ -157,183 +97,53 @@ const EXP_CONFIG = {
   EXPERT: { label: "Expert", color: "text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950 border-violet-200 dark:border-violet-800" },
 };
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
-function formatBudget(n) {
-  if (n >= 100000) return `₹${(n / 100000).toFixed(n % 100000 === 0 ? 0 : 1)}L`;
-  return `₹${(n / 1000).toFixed(0)}K`;
-}
-
-function daysUntil(dateStr) {
-  const diff = Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
-  return diff;
-}
-
-function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-}
-
-// ─── Apply Modal ───────────────────────────────────────────────────────────────
-function ApplyModal({ open, onClose, project, auth }) {
-  const [step, setStep] = useState(1);
-  const [proposal, setProposal] = useState("");
-  const [bidAmount, setBidAmount] = useState("");
-
-  function handleSubmit() {
-    setStep(2);
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => { onClose(); setStep(1); }}>
-      <DialogContent className="max-w-lg rounded-none border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0 gap-0 overflow-hidden">
-        <div className="h-0.75 bg-zinc-900 dark:bg-zinc-100 w-full" />
-        <div className="p-8">
-          {step === 1 ? (
-            <>
-              <DialogHeader className="mb-6">
-                <DialogTitle className="text-xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">
-                  Submit Proposal
-                </DialogTitle>
-                <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                  Applying for: <span className="font-semibold text-zinc-700 dark:text-zinc-300">{project.title}</span>
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-5">
-                {/* Bid Amount */}
-                <div>
-                  <label className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block mb-2">
-                    Your Bid ({project.projectType === "FIXED" ? "Fixed Price" : "Hourly Rate"})
-                  </label>
-                  <div className="relative">
-                    <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
-                    <Input
-                      type="number"
-                      placeholder={project.projectType === "FIXED" ? "e.g. 90000" : "e.g. 1200"}
-                      value={bidAmount}
-                      onChange={(e) => setBidAmount(e.target.value)}
-                      className="pl-8 rounded-none border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus-visible:ring-1 focus-visible:ring-zinc-400"
-                    />
-                  </div>
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1 font-mono">
-                    Budget range: {formatBudget(project.minBudget)} – {formatBudget(project.maxBudget)}
-                  </p>
-                </div>
-
-                {/* Proposal */}
-                <div>
-                  <label className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block mb-2">
-                    Cover Letter / Proposal
-                  </label>
-                  <Textarea
-                    placeholder="Describe your approach, relevant experience, and why you're the best fit..."
-                    value={proposal}
-                    onChange={(e) => setProposal(e.target.value)}
-                    rows={5}
-                    className="rounded-none border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm resize-none focus-visible:ring-1 focus-visible:ring-zinc-400 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
-                  />
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1 font-mono">
-                    {proposal.length}/1000 characters
-                  </p>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={!bidAmount || !proposal.trim()}
-                    className="flex-1 rounded-none bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 font-semibold gap-2 disabled:opacity-50"
-                  >
-                    <Send className="w-4 h-4" /> Submit Proposal
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={onClose}
-                    className="rounded-none text-zinc-500 dark:text-zinc-400"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-4">
-              <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 rounded-sm flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
-              </div>
-              <h3 className="text-xl font-black tracking-tight text-zinc-900 dark:text-zinc-100 mb-2">Proposal Sent!</h3>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto">
-                Your proposal has been submitted to <span className="font-semibold text-zinc-700 dark:text-zinc-300">{project.client.name}</span>. You'll be notified when they respond.
-              </p>
-              <Button
-                onClick={() => { onClose(); setStep(1); }}
-                className="mt-6 rounded-none bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 font-semibold"
-              >
-                Close
-              </Button>
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── Auth Gate Modal ───────────────────────────────────────────────────────────
-function AuthGateModal({ open, onClose }) {
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm rounded-none border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0 gap-0 overflow-hidden">
-        <div className="h-0.75 bg-amber-400 w-full" />
-        <div className="p-8 text-center">
-          <div className="w-14 h-14 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-sm flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-          </div>
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">
-              Login Required
-            </DialogTitle>
-            <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400 mt-2">
-              You need to log in to apply for projects on WorkHub.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="mt-6 flex flex-col gap-2">
-            <Button className="w-full rounded-none bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 font-semibold">
-              Log In
-            </Button>
-            <Button variant="ghost" className="w-full rounded-none text-zinc-500 dark:text-zinc-400 text-sm">
-              Create Account
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function ProjectDetailPage({ params }) {
+  const { slug } = use(params);
+  console.log("Project slug:", slug);
   const auth = MOCK_AUTH;
-  const project = PROJECT;
   const [applyOpen, setApplyOpen] = useState(false);
   const [authGateOpen, setAuthGateOpen] = useState(false);
+  const [projectDetail, setProjectDetail] = useState(null);
+  const [loading, setLoading] = useState(null);
 
-  const status = STATUS_CONFIG[project.status];
-  const visibility = VISIBILITY_CONFIG[project.visibility];
-  const exp = project.experienceLevel ? EXP_CONFIG[project.experienceLevel] : null;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fetch/project/${slug}`);
+        
+        if (!res.ok) {
+          return <NotFound/>;
+        }
+        
+        const data = await res.json();
+        console.log("Fetched project data:", data);
+        setProjectDetail(data);
+
+      } catch (error) {
+        console.error("Error fetching project data:", error);
+        return <NotFound/>;
+      }
+    };
+
+    fetchData();
+  }, [slug]);
+  
+
+  const status = STATUS_CONFIG[projectDetail?.status];
+  const visibility = VISIBILITY_CONFIG[projectDetail?.visibility];
+  const exp = projectDetail?.experienceLevel ? EXP_CONFIG[projectDetail?.experienceLevel] : null;
   const VisibilityIcon = visibility.icon;
+  const clean = sanitizeHtml(projectDetail?.description);
 
-  const daysLeft = daysUntil(project.deadline);
+  const daysLeft = daysUntil(projectDetail?.deadline);
   const deadlineUrgent = daysLeft <= 7;
   const deadlinePassed = daysLeft < 0;
 
-  const completedTasks = project.tasks.filter((t) => t.status === "COMPLETED").length;
-  const taskProgress = Math.round((completedTasks / project.tasks.length) * 100);
-
-  // Can this user apply?
   function canApply() {
     if (!auth.isLoggedIn) return "login";
     if (auth.userType === "client") return "client_no";
-    if (project.visibility === "FREELANCER" && auth.userType === "organization") return "wrong_type";
-    if (project.visibility === "ORGANIZATION" && auth.userType === "freelancer") return "wrong_type";
+    if (projectDetail?.visibility === "FREELANCER" && auth.userType === "organization") return "wrong_type";
+    if (projectDetail?.visibility === "ORGANIZATION" && auth.userType === "freelancer") return "wrong_type";
     return "apply";
   }
 
@@ -346,8 +156,10 @@ export default function ProjectDetailPage({ params }) {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+      <Navbar />
+      <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 rounded-full bg-indigo-500/5 blur-[120px]" />
 
-      <div className="max-w-6xl mx-auto px-6 md:px-10 py-10">
+      <div className="mt-24 max-w-6xl mx-auto px-6 md:px-10 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
           <div className="lg:col-span-2 flex flex-col gap-6">
@@ -356,10 +168,10 @@ export default function ProjectDetailPage({ params }) {
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
               {/* Status accent */}
               <div className={`h-0.75 w-full ${
-                project.status === "OPEN" ? "bg-emerald-400" :
-                project.status === "IN_PROGRESS" ? "bg-sky-400" :
-                project.status === "UNDER_REVIEW" ? "bg-amber-400" :
-                project.status === "COMPLETED" ? "bg-zinc-300 dark:bg-zinc-600" : "bg-red-400"
+                projectDetail?.status === "OPEN" ? "bg-emerald-400" :
+                projectDetail?.status === "IN_PROGRESS" ? "bg-sky-400" :
+                projectDetail?.status === "UNDER_REVIEW" ? "bg-amber-400" :
+                projectDetail?.status === "COMPLETED" ? "bg-zinc-300 dark:bg-zinc-600" : "bg-red-400"
               }`} />
 
               <div className="p-7">
@@ -374,7 +186,7 @@ export default function ProjectDetailPage({ params }) {
                     {visibility.label}
                   </span>
                   <span className="flex items-center gap-1.5 text-xs font-medium border px-2.5 py-1 rounded-sm bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700">
-                    {project.projectType === "FIXED" ? (
+                    {projectDetail?.projectType === "FIXED" ? (
                       <><FileText className="w-3 h-3" /> Fixed Price</>
                     ) : (
                       <><Timer className="w-3 h-3" /> Hourly</>
@@ -389,23 +201,19 @@ export default function ProjectDetailPage({ params }) {
 
                 {/* Title */}
                 <h1 className="text-2xl md:text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight leading-tight mb-3">
-                  {project.title}
+                  {projectDetail?.title}
                 </h1>
 
                 {/* Meta line */}
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-zinc-500 dark:text-zinc-400">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    Posted {formatDate(project.createdAt)}
+                    Posted {formatDate(projectDetail?.createdAt)}
                   </span>
-                  <span className="flex items-center gap-1">
+                  {/* <span className="flex items-center gap-1">
                     <RefreshCw className="w-3 h-3" />
-                    Updated {formatDate(project.updatedAt)}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Hash className="w-3 h-3" />
-                    {project.project_id.slice(-8).toUpperCase()}
-                  </span>
+                    Updated {formatDate(projectDetail?.updatedAt)}
+                  </span> */}
                 </div>
               </div>
             </div>
@@ -415,13 +223,8 @@ export default function ProjectDetailPage({ params }) {
               <p className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-4">
                 Project Description
               </p>
-              <div className="prose-sm max-w-none">
-                {project.description.split("\n\n").map((para, i) => (
-                  <p key={i} className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3 last:mb-0">
-                    {para}
-                  </p>
-                ))}
-              </div>
+              <div className="ProseMirror" dangerouslySetInnerHTML={{ __html: clean }} />
+
             </div>
 
             {/* ── Skills ── */}
@@ -430,12 +233,12 @@ export default function ProjectDetailPage({ params }) {
                 <Wrench className="w-3 h-3" /> Required Skills
               </p>
               <div className="flex flex-wrap gap-2">
-                {project.skills.map((skill) => (
+                {projectDetail?.skills.map((skill) => (
                   <span
-                    key={skill}
+                    key={skill?.id}
                     className="text-sm font-mono px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 rounded-sm hover:border-zinc-400 dark:hover:border-zinc-500 transition-colors cursor-default"
                   >
-                    {skill}
+                    {skill?.name}
                   </span>
                 ))}
               </div>
@@ -447,18 +250,16 @@ export default function ProjectDetailPage({ params }) {
                 <Globe className="w-3 h-3" /> Industries
               </p>
               <div className="flex flex-wrap gap-2">
-                {project.industry.map((ind) => (
+                {projectDetail?.industry.map((ind) => (
                   <span
-                    key={ind}
+                    key={ind?.id}
                     className="text-xs px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400 border border-zinc-100 dark:border-zinc-800 rounded-sm"
                   >
-                    {ind}
+                    {ind?.name}
                   </span>
                 ))}
               </div>
             </div>
-
-            
 
           </div>
 
@@ -475,21 +276,21 @@ export default function ProjectDetailPage({ params }) {
                 {/* Budget */}
                 <div className="mb-5">
                   <p className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1.5">
-                    {project.projectType === "FIXED" ? "Project Budget" : "Hourly Rate"}
+                    {projectDetail?.projectType === "FIXED" ? "Project Budget" : "Hourly Rate"}
                   </p>
-                  {project.finalPrice ? (
+                  {projectDetail?.finalPrice ? (
                     <div>
                       <p className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
-                        {formatBudget(project.finalPrice)}
+                        {formatBudget(projectDetail?.finalPrice)}
                       </p>
                       <p className="text-xs text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">Final agreed price</p>
                     </div>
                   ) : (
                     <div>
                       <p className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
-                        {formatBudget(project.minBudget)}
+                        {formatBudget(projectDetail?.minBudget)}
                         <span className="text-zinc-300 dark:text-zinc-700 mx-1.5 font-light">–</span>
-                        {formatBudget(project.maxBudget)}
+                        {formatBudget(projectDetail?.maxBudget)}
                       </p>
                       <p className="text-xs text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">Estimated range</p>
                     </div>
@@ -503,7 +304,7 @@ export default function ProjectDetailPage({ params }) {
                   <p className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 dark:text-zinc-500 mb-1.5">Deadline</p>
                   <p className={`text-sm font-semibold flex items-center gap-2 ${deadlinePassed ? "text-red-600 dark:text-red-400" : deadlineUrgent ? "text-amber-600 dark:text-amber-400" : "text-zinc-900 dark:text-zinc-100"}`}>
                     <Calendar className="w-3.5 h-3.5" />
-                    {formatDate(project.deadline)}
+                    {formatDate(projectDetail?.deadline)}
                   </p>
                   <p className={`text-xs mt-1 font-mono ${deadlinePassed ? "text-red-500 dark:text-red-400" : deadlineUrgent ? "text-amber-500 dark:text-amber-400" : "text-zinc-400 dark:text-zinc-500"}`}>
                     {deadlinePassed
@@ -568,32 +369,22 @@ export default function ProjectDetailPage({ params }) {
                   {
                     icon: Briefcase,
                     label: "Project Type",
-                    value: project.projectType === "FIXED" ? "Fixed Price" : "Hourly Rate",
+                    value: projectDetail?.projectType === "FIXED" ? "Fixed Price" : "Hourly Rate",
                   },
                   {
                     icon: Eye,
                     label: "Visibility",
-                    value: visibility.label,
+                    value: projectDetail?.visibility,
                   },
-                  exp && {
+                  projectDetail?.experienceLevel && {
                     icon: Award,
                     label: "Experience",
-                    value: exp.label,
+                    value: projectDetail?.experienceLevel,
                   },
                   {
                     icon: BarChart2,
                     label: "Status",
-                    value: status.label,
-                  },
-                  project.startDate && {
-                    icon: Zap,
-                    label: "Start Date",
-                    value: formatDate(project.startDate),
-                  },
-                  project.completionDate && {
-                    icon: CheckCircle2,
-                    label: "Completed",
-                    value: formatDate(project.completionDate),
+                    value: projectDetail?.status,
                   },
                 ]
                   .filter(Boolean)
@@ -623,13 +414,13 @@ export default function ProjectDetailPage({ params }) {
               </p>
               <div className="flex items-start gap-3 mb-4">
                 <div className="w-10 h-10 rounded-sm bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-xs font-black text-zinc-600 dark:text-zinc-400 shrink-0">
-                  {project.client.initials}
+                  {/* {projectDetail?.client?.initials} */} CT
                 </div>
                 <div>
                   <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
-                    {project.client.name}
+                    {projectDetail?.client?.user?.first_name + " " + projectDetail?.client?.user?.last_name}
                   </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{project.client.company}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{projectDetail?.client?.org_name}</p>
                 </div>
               </div>
 
@@ -638,19 +429,21 @@ export default function ProjectDetailPage({ params }) {
                   <span className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
                     <Star className="w-3 h-3 fill-amber-400 text-amber-400" /> Rating
                   </span>
-                  <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{project.client.rating} / 5.0</span>
+                  <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{projectDetail?.client?.rating} / 5.0</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
                     <FolderOpen className="w-3 h-3" /> Projects Posted
                   </span>
-                  <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{project.client.projectsPosted}</span>
+                  <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+                    {/* {projectDetail?.client?.projectsPosted} */} 10
+                    </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
                     <BadgeCheck className="w-3 h-3" /> Member Since
                   </span>
-                  <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{project.client.memberSince}</span>
+                  <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{projectDetail?.client?.user?.createdAt}</span>
                 </div>
               </div>
             </div>
@@ -660,11 +453,10 @@ export default function ProjectDetailPage({ params }) {
       </div>
       <Footer />
 
-      {/* ── Modals ── */}
       <ApplyModal
         open={applyOpen}
         onClose={() => setApplyOpen(false)}
-        project={project}
+        project={projectDetail}
         auth={auth}
       />
       <AuthGateModal
@@ -675,7 +467,155 @@ export default function ProjectDetailPage({ params }) {
   );
 }
 
-// needed for client card
+function formatBudget(n) {
+  if (n >= 100000) return `₹${(n / 100000).toFixed(n % 100000 === 0 ? 0 : 1)}L`;
+  return `₹${(n / 1000).toFixed(0)}K`;
+}
+
+function daysUntil(dateStr) {
+  const diff = Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
+  return diff;
+}
+
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function ApplyModal({ open, onClose, project, auth }) {
+  const [step, setStep] = useState(1);
+  const [proposal, setProposal] = useState("");
+  const [bidAmount, setBidAmount] = useState("");
+
+  function handleSubmit() {
+    setStep(2);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { onClose(); setStep(1); }}>
+      <DialogContent className="max-w-lg rounded-none border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0 gap-0 overflow-hidden">
+        <div className="h-0.75 bg-zinc-900 dark:bg-zinc-100 w-full" />
+        <div className="p-8">
+          {step === 1 ? (
+            <>
+              <DialogHeader className="mb-6">
+                <DialogTitle className="text-xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">
+                  Submit Proposal
+                </DialogTitle>
+                <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+                  Applying for: <span className="font-semibold text-zinc-700 dark:text-zinc-300">{project?.title}</span>
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-5">
+                {/* Bid Amount */}
+                <div>
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block mb-2">
+                    Your Bid ({project?.projectType === "FIXED" ? "Fixed Price" : "Hourly Rate"})
+                  </label>
+                  <div className="relative">
+                    <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 dark:text-zinc-500" />
+                    <Input
+                      type="number"
+                      placeholder={project?.projectType === "FIXED" ? "e.g. 90000" : "e.g. 1200"}
+                      value={bidAmount}
+                      onChange={(e) => setBidAmount(e.target.value)}
+                      className="pl-8 rounded-none border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm focus-visible:ring-1 focus-visible:ring-zinc-400"
+                    />
+                  </div>
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1 font-mono">
+                    Budget range: {formatBudget(project?.minBudget)} – {formatBudget(project?.maxBudget)}
+                  </p>
+                </div>
+
+                {/* Proposal */}
+                <div>
+                  <label className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 dark:text-zinc-500 block mb-2">
+                    Cover Letter / Proposal
+                  </label>
+                  <Textarea
+                    placeholder="Describe your approach, relevant experience, and why you're the best fit..."
+                    value={proposal}
+                    onChange={(e) => setProposal(e.target.value)}
+                    rows={5}
+                    className="rounded-none border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 text-sm resize-none focus-visible:ring-1 focus-visible:ring-zinc-400 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
+                  />
+                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1 font-mono">
+                    {proposal.length}/1000 characters
+                  </p>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={!bidAmount || !proposal.trim()}
+                    className="flex-1 rounded-none bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 font-semibold gap-2 disabled:opacity-50"
+                  >
+                    <Send className="w-4 h-4" /> Submit Proposal
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={onClose}
+                    className="rounded-none text-zinc-500 dark:text-zinc-400"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-4">
+              <div className="w-14 h-14 bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 rounded-sm flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <h3 className="text-xl font-black tracking-tight text-zinc-900 dark:text-zinc-100 mb-2">Proposal Sent!</h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto">
+                Your proposal has been submitted to <span className="font-semibold text-zinc-700 dark:text-zinc-300">{project.client.name}</span>. You'll be notified when they respond.
+              </p>
+              <Button
+                onClick={() => { onClose(); setStep(1); }}
+                className="mt-6 rounded-none bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 font-semibold"
+              >
+                Close
+              </Button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AuthGateModal({ open, onClose }) {
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-sm rounded-none border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-0 gap-0 overflow-hidden">
+        <div className="h-0.75 bg-amber-400 w-full" />
+        <div className="p-8 text-center">
+          <div className="w-14 h-14 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-sm flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+          </div>
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black tracking-tight text-zinc-900 dark:text-zinc-100">
+              Login Required
+            </DialogTitle>
+            <DialogDescription className="text-sm text-zinc-500 dark:text-zinc-400 mt-2">
+              You need to log in to apply for projects on WorkHub.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-6 flex flex-col gap-2">
+            <Button className="w-full rounded-none bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-300 font-semibold">
+              Log In
+            </Button>
+            <Button variant="ghost" className="w-full rounded-none text-zinc-500 dark:text-zinc-400 text-sm">
+              Create Account
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function FolderOpen({ className }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

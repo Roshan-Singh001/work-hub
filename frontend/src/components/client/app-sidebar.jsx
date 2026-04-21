@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import WorkHubLogo from "../../../public/WorkHubLogo.png"
 import { useAuth } from "@/contexts/AuthContext"
+import Link from "next/link";
 import {
   AudioWaveform,
   BookOpen,
@@ -35,6 +36,7 @@ import {
   Trash2,
   LayoutDashboard,
   House,
+  User,
 } from "lucide-react"
 
 import {
@@ -94,8 +96,8 @@ const data = {
       isActive: true,
       items: [
         {
-          title: "All Projects",
-          url: "/client/dashboard/project/all",
+          title: "Open Projects",
+          url: "/client/dashboard/project/open",
         },
         {
           title: "Active Projects",
@@ -145,21 +147,21 @@ const data = {
         },
       ],
     },
-    {
-      title: "Files",
-      url: "#",
-      icon: Folder,
-      items: [
-        {
-          title: "Shared Files",
-          url: "/client/dashboard/files/shared",
-        },
-        {
-          title: "Downloads",
-          url: "/client/dashboard/files/downloads",
-        },
-      ],
-    },
+    // {
+    //   title: "Files",
+    //   url: "#",
+    //   icon: Folder,
+    //   items: [
+    //     {
+    //       title: "Shared Files",
+    //       url: "/client/dashboard/files/shared",
+    //     },
+    //     {
+    //       title: "Downloads",
+    //       url: "/client/dashboard/files/downloads",
+    //     },
+    //   ],
+    // },
     {
       title: "Feedback",
       url: "#",
@@ -187,6 +189,10 @@ const data = {
         {
           title: "General",
           url: "/client/dashboard/settings/general",
+        },
+        {
+          title: "Profile",
+          url: "/client/dashboard/settings/profile",
         },
       ],
     },
@@ -248,7 +254,9 @@ function NavUser({ user, logOut }) {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarFallback className="rounded-lg"><ShieldUser className="text-black dark:text-white" /></AvatarFallback>
+                <AvatarFallback className="rounded-lg">
+                  <User className="text-black dark:text-white" />
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -266,7 +274,9 @@ function NavUser({ user, logOut }) {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarFallback className="rounded-lg"><ShieldUser className="text-black dark:text-white" /></AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    <User className="text-black dark:text-white" />
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -330,9 +340,9 @@ function NavMain({ items }) {
 
                   <SidebarMenuButton tooltip={item.title} isActive={pathname === item.url}>
                     {item.icon && <item.icon />}
-                    <a href={item.url}>
+                    <Link href={item.url}>
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 }
 
@@ -341,9 +351,9 @@ function NavMain({ items }) {
                     {item.items?.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
-                          <a href={subItem.url}>
+                          <Link href={subItem.url}>
                             <span>{subItem.title}</span>
-                          </a>
+                          </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}

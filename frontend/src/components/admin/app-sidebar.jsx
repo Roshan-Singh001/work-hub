@@ -3,6 +3,7 @@
 import * as React from "react"
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext"
+import Link from "next/link";
 import Image from "next/image";
 import WorkHubLogo from "../../../public/WorkHubLogo.png"
 import {
@@ -35,6 +36,7 @@ import {
   Trash2,
   LayoutDashboard,
   House,
+  Megaphone,
 } from "lucide-react"
 
 import {
@@ -105,10 +107,10 @@ const data = {
           title: "Clients",
           url: "/admin/dashboard/users/clients",
         },
-        {
-          title: "Suspended Users",
-          url: "/admin/dashboard/users/suspended",
-        },
+        // {
+        //   title: "Suspended Users",
+        //   url: "/admin/dashboard/users/suspended",
+        // },
       ],
     },
     {
@@ -126,19 +128,29 @@ const data = {
         },
       ],
     },
+    // {
+    //   title: "Messages",
+    //   url: "#",
+    //   icon: MessagesSquare,
+    //   items: [
+    //     {
+    //       title: "Announcements",
+    //       url: "/admin/dashboard/messages/announcements",
+    //     },
+    //     // {
+    //     //   title: "Messages",
+    //     //   url: "/admin/dashboard/messages",
+    //     // },
+    //   ],
+    // },
     {
-      title: "Messages",
+      title: "Announcements",
       url: "#",
-      icon: MessagesSquare,
+      icon: Megaphone,
+      requiresApproval: true,
       items: [
-        {
-          title: "Announcements",
-          url: "/admin/dashboard/messages/announcements",
-        },
-        // {
-        //   title: "Messages",
-        //   url: "/admin/dashboard/messages",
-        // },
+        { title: "All Announcements",    url: "/admin/dashboard/announcement/all" },
+        { title: "Create New",    url: "/admin/dashboard/announcement/create" },
       ],
     },
     {
@@ -307,9 +319,9 @@ function NavMain({ items }) {
 
                   <SidebarMenuButton tooltip={item.title} isActive={pathname === item.url}>
                     {item.icon && <item.icon />}
-                    <a href={item.url}>
+                    <Link href={item.url}>
                       <span>{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 }
 
@@ -318,9 +330,9 @@ function NavMain({ items }) {
                     {item.items?.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
                         <SidebarMenuSubButton asChild isActive={pathname === subItem.url}>
-                          <a href={subItem.url}>
+                          <Link href={subItem.url}>
                             <span>{subItem.title}</span>
-                          </a>
+                          </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}

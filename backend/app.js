@@ -6,6 +6,7 @@ import adminRouter from "./routes/admin.route.js"
 import orgAdminRouter from "./routes/orgadmin.route.js"
 import clientRouter from "./routes/client.route.js"
 import fetchRouter from "./routes/fetch.route.js"
+import projectRouter from "./routes/project.route.js"
 
 const app = express()
 app.use(cors({
@@ -20,6 +21,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/org/admin', orgAdminRouter);
 app.use('/api/client', clientRouter);
 app.use('/api/fetch', fetchRouter);
+app.use('/api/project', projectRouter);
 
 
 

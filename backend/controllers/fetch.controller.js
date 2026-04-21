@@ -15,3 +15,13 @@ export const getProjectBySlug = async (req, res) => {
         res.status(404).json({ message: "Internal server error" })
     }
 }
+
+export const getAllProjects = async (req, res) => {
+    try {
+        const result = await fetchService.getAllProjects();
+        res.status(200).json(result);
+    } catch (err) {
+        console.error("Error fetching all projects:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}

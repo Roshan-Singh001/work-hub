@@ -8,5 +8,6 @@ const fetchRouter = express.Router();
 // fetchRouter.use(authorizeClient);
 
 fetchRouter.get("/project/:slug", fetchController.getProjectBySlug);
+fetchRouter.get("/projects", fetchController.getAllProjects);
 
 export default fetchRouter;

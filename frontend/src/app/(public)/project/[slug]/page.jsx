@@ -11,10 +11,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
 import Footer from "@/components/Footer";
-import NotFound from "../not-found";
 import {
   Calendar,
   Clock,
@@ -51,11 +52,6 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
-
-const MOCK_AUTH = {
-  isLoggedIn: true,
-  userType: "freelancer", // null | "freelancer" | "organization" | "client"
-};
 
 const STATUS_CONFIG = {
   OPEN: {
@@ -99,40 +95,58 @@ const EXP_CONFIG = {
 
 export default function ProjectDetailPage({ params }) {
   const { slug } = use(params);
-  console.log("Project slug:", slug);
-  const auth = MOCK_AUTH;
+  const { isLoggedIn, userData } = useAuth();
   const [applyOpen, setApplyOpen] = useState(false);
   const [authGateOpen, setAuthGateOpen] = useState(false);
   const [projectDetail, setProjectDetail] = useState(null);
-  const [loading, setLoading] = useState(null);
+  const [notFound, setNotFound] = useState(false);
+  const [totalProject, setTotalProject] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fetch/project/${slug}`);
-        
+
         if (!res.ok) {
-          return <NotFound/>;
+          setNotFound(true);
+          return;
         }
-        
+
         const data = await res.json();
-        console.log("Fetched project data:", data);
-        setProjectDetail(data);
+        console.log("Fetched project data:", data.project);
+        setProjectDetail(data.project);
+        setTotalProject(data.totalProjects);
 
       } catch (error) {
         console.error("Error fetching project data:", error);
-        return <NotFound/>;
       }
     };
 
     fetchData();
-  }, [slug]);
-  
+  }, [slug, userData]);
+
+  if (notFound) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="mx-auto mb-4 text-red-500" size={48} />
+          <h1 className="text-2xl font-bold mb-2">Project Not Found</h1>
+          <p className="text-zinc-600 dark:text-zinc-400 mb-4">
+            The project you are looking for does not exist or has been removed.
+          </p>
+          <Button variant="outline" onClick={() => window.history.back()}>
+            Go Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
 
   const status = STATUS_CONFIG[projectDetail?.status];
   const visibility = VISIBILITY_CONFIG[projectDetail?.visibility];
   const exp = projectDetail?.experienceLevel ? EXP_CONFIG[projectDetail?.experienceLevel] : null;
-  const VisibilityIcon = visibility.icon;
+  const VisibilityIcon = visibility?.icon;
   const clean = sanitizeHtml(projectDetail?.description);
 
   const daysLeft = daysUntil(projectDetail?.deadline);
@@ -140,10 +154,11 @@ export default function ProjectDetailPage({ params }) {
   const deadlinePassed = daysLeft < 0;
 
   function canApply() {
-    if (!auth.isLoggedIn) return "login";
-    if (auth.userType === "client") return "client_no";
-    if (projectDetail?.visibility === "FREELANCER" && auth.userType === "organization") return "wrong_type";
-    if (projectDetail?.visibility === "ORGANIZATION" && auth.userType === "freelancer") return "wrong_type";
+    if (!isLoggedIn) return "login";
+    if (userData?.role === "Client") return "client";
+    if (userData?.role === "Admin") return "admin";
+    if (projectDetail?.visibility === "FREELANCER" && userData?.userType === "ORG_Owner") return "wrong_type";
+    if (projectDetail?.visibility === "ORGANIZATION" && userData?.userType === "Freelancer") return "wrong_type";
     return "apply";
   }
 
@@ -167,23 +182,22 @@ export default function ProjectDetailPage({ params }) {
             {/* ── Header Card ── */}
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
               {/* Status accent */}
-              <div className={`h-0.75 w-full ${
-                projectDetail?.status === "OPEN" ? "bg-emerald-400" :
+              <div className={`h-0.75 w-full ${projectDetail?.status === "OPEN" ? "bg-emerald-400" :
                 projectDetail?.status === "IN_PROGRESS" ? "bg-sky-400" :
-                projectDetail?.status === "UNDER_REVIEW" ? "bg-amber-400" :
-                projectDetail?.status === "COMPLETED" ? "bg-zinc-300 dark:bg-zinc-600" : "bg-red-400"
-              }`} />
+                  projectDetail?.status === "UNDER_REVIEW" ? "bg-amber-400" :
+                    projectDetail?.status === "COMPLETED" ? "bg-zinc-300 dark:bg-zinc-600" : "bg-red-400"
+                }`} />
 
               <div className="p-7">
                 {/* Status + type row */}
                 <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <span className={`flex items-center gap-1.5 text-xs font-medium border px-2.5 py-1 rounded-sm ${status.badge}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
-                    {status.label}
+                  <span className={`flex items-center gap-1.5 text-xs font-medium border px-2.5 py-1 rounded-sm ${status?.badge}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${status?.dot}`} />
+                    {status?.label}
                   </span>
-                  <span className={`flex items-center gap-1.5 text-xs font-medium border px-2.5 py-1 rounded-sm ${visibility.color}`}>
-                    <VisibilityIcon className="w-3 h-3" />
-                    {visibility.label}
+                  <span className={`flex items-center gap-1.5 text-xs font-medium border px-2.5 py-1 rounded-sm ${visibility?.color}`}>
+                    {VisibilityIcon && <VisibilityIcon className="w-3 h-3" />}
+                    {visibility?.label}
                   </span>
                   <span className="flex items-center gap-1.5 text-xs font-medium border px-2.5 py-1 rounded-sm bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700">
                     {projectDetail?.projectType === "FIXED" ? (
@@ -268,10 +282,9 @@ export default function ProjectDetailPage({ params }) {
 
             {/* ── Apply / CTA Box ── */}
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
-              <div className={`h-0.75 w-full ${
-                applyState === "apply" ? "bg-zinc-900 dark:bg-zinc-100" :
+              <div className={`h-0.75 w-full ${applyState === "apply" ? "bg-zinc-900 dark:bg-zinc-100" :
                 applyState === "login" ? "bg-amber-400" : "bg-zinc-200 dark:bg-zinc-700"
-              }`} />
+                }`} />
               <div className="p-6">
                 {/* Budget */}
                 <div className="mb-5">
@@ -310,8 +323,8 @@ export default function ProjectDetailPage({ params }) {
                     {deadlinePassed
                       ? `Deadline passed ${Math.abs(daysLeft)} days ago`
                       : daysLeft === 0
-                      ? "Due today"
-                      : `${daysLeft} days remaining`}
+                        ? "Due today"
+                        : `${daysLeft} days remaining`}
                   </p>
                   {deadlineUrgent && !deadlinePassed && (
                     <p className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 mt-1.5">
@@ -353,7 +366,12 @@ export default function ProjectDetailPage({ params }) {
                 )}
                 {applyState === "client" && (
                   <p className="text-xs text-center text-zinc-400 dark:text-zinc-500">
-                    You posted this project. You can manage it from your dashboard.
+                    Client cannot apply to projects.
+                  </p>
+                )}
+                {applyState === "admin" && (
+                  <p className="text-xs text-center text-zinc-400 dark:text-zinc-500">
+                    Admin cannot apply to projects.
                   </p>
                 )}
               </div>
@@ -414,7 +432,11 @@ export default function ProjectDetailPage({ params }) {
               </p>
               <div className="flex items-start gap-3 mb-4">
                 <div className="w-10 h-10 rounded-sm bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-xs font-black text-zinc-600 dark:text-zinc-400 shrink-0">
-                  {/* {projectDetail?.client?.initials} */} CT
+                  {projectDetail?.client?.client_dp_url ? (
+                    <img src={projectDetail?.client?.client_dp_url} alt="Client DP" className="w-full h-full object-cover rounded-sm" />
+                  ) : (
+                    <User className="w-4 h-4" />
+                  )}
                 </div>
                 <div>
                   <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
@@ -436,14 +458,14 @@ export default function ProjectDetailPage({ params }) {
                     <FolderOpen className="w-3 h-3" /> Projects Posted
                   </span>
                   <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-                    {/* {projectDetail?.client?.projectsPosted} */} 10
-                    </span>
+                    {totalProject}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
                     <BadgeCheck className="w-3 h-3" /> Member Since
                   </span>
-                  <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{projectDetail?.client?.user?.createdAt}</span>
+                  <span className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">{formatDate(projectDetail?.client?.user?.createdAt)}</span>
                 </div>
               </div>
             </div>
@@ -457,7 +479,7 @@ export default function ProjectDetailPage({ params }) {
         open={applyOpen}
         onClose={() => setApplyOpen(false)}
         project={projectDetail}
-        auth={auth}
+        userData={userData}
       />
       <AuthGateModal
         open={authGateOpen}
@@ -478,16 +500,50 @@ function daysUntil(dateStr) {
 }
 
 function formatDate(dateStr) {
+  if (!dateStr) return "N/A";
   return new Date(dateStr).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function ApplyModal({ open, onClose, project, auth }) {
+function ApplyModal({ open, onClose, project, userData }) {
   const [step, setStep] = useState(1);
   const [proposal, setProposal] = useState("");
   const [bidAmount, setBidAmount] = useState("");
 
-  function handleSubmit() {
-    setStep(2);
+  async function handleSubmit() {
+    console.log("Submitting proposal with amount:", bidAmount, "and proposal:", proposal);
+    // const formData1 = new FormData();
+    // formData1.append("proposal", proposal);
+    // formData1.append("bidAmount", bidAmount);
+
+    const data = {
+      proposal,
+      bidAmount
+    };
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/project/proposal/${project?.project_id}/apply`, {
+        method: "POST",
+        credentials: "include",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!res.ok) {
+        let errorMsg = "Failed to submit proposal. Please try again.";
+        try {
+          const errorData = await res.json();
+          if (errorData?.message) errorMsg = errorData.message;
+        } catch { }
+        toast.error(errorMsg);
+        return;
+      }
+      toast.success("Proposal submitted successfully!");
+      setStep(2);
+    } catch (error) {
+      console.error("Error submitting proposal:", error);
+      toast.error("Failed to submit proposal. Please try again.");
+    }
   }
 
   return (
@@ -569,7 +625,7 @@ function ApplyModal({ open, onClose, project, auth }) {
               </div>
               <h3 className="text-xl font-black tracking-tight text-zinc-900 dark:text-zinc-100 mb-2">Proposal Sent!</h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto">
-                Your proposal has been submitted to <span className="font-semibold text-zinc-700 dark:text-zinc-300">{project.client.name}</span>. You'll be notified when they respond.
+                Your proposal has been submitted to <span className="font-semibold text-zinc-700 dark:text-zinc-300">{project?.client?.user?.first_name + " " + project?.client?.user?.last_name}</span>.
               </p>
               <Button
                 onClick={() => { onClose(); setStep(1); }}

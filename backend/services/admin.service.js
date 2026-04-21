@@ -177,3 +177,52 @@ export const addUser = async (userData, role) => {
     }
 
 }
+
+export const getAllAnnouncements = async () => {
+    const announcements = await prisma.adminAnnouncement.findMany({
+        orderBy: {
+            createdAt: 'desc'
+        }
+    })
+
+    return announcements;
+}
+
+export const createAnnouncement = async (announcementData) => {
+    const announcement = await prisma.adminAnnouncement.create({
+        data: {
+            title: announcementData.title,
+            content: announcementData.content,
+            adminId: announcementData.adminId,
+        }
+        
+    })
+
+    return {message: "Announcement created successfully", announcement};
+}
+
+export const getClients = async () => {
+    const clients = await prisma.user.findMany({
+        where: {
+            role: "Client"
+        },
+        select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            email: true,
+            phone: true,
+            createdAt: true,
+            client: {
+                select: {
+                    org_name: true,
+                    country: true,
+                    client_dp_url: true,
+                    rating: true,
+                }
+            }
+        }
+    })
+
+    return clients;
+}

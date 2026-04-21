@@ -60,6 +60,17 @@ enum ProjectType {
   HOURLY
 }
 
+enum ApplicantType {
+  FREELANCER
+  ORGANIZATION
+}
+
+enum ApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 model Admin {
   id       String @id @default(uuid())
   name     String
@@ -91,11 +102,15 @@ model User {
   client         Client?
   member         Org_member?
   freelancer     Freelancer?
-  projectApplications   ProjectApplication[] @relation("FreelancerApplications")
+  applicant      ProjectApplication[] @relation("Applicant")
   taskApplications TaskApplication[]
   reportsMade Report[]
   reportsReceived Report[] @relation("ReportedUser")
   feedbacks Feedback[]
+  ratingsGiven rating[] @relation("Rater")
+  ratingsReceived rating[] @relation("Ratee")
+  messagesSent Message[]
+  conversationMembers ConversationMember[]
 }
 
 model Organization {
@@ -118,7 +133,6 @@ model Organization {
   rating Float @default(0)
 
   members Org_member[]
-  orgApplications ProjectApplication[]
   orgAnnouncements OrganizationAnnouncement[]
 }
 
@@ -219,6 +233,24 @@ model Project {
   updatedAt DateTime @updatedAt
 
   applications ProjectApplication[]
+  conversations Conversation[]
+}
+
+model ProjectApplication {
+  id String @id @default(uuid())
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [project_id])
+
+  applicantType ApplicantType
+
+  applicantId String?
+  applicant   User? @relation("Applicant", fields: [applicantId], references: [id])
+
+  coverLetter String? @db.Text
+  proposedPrice Float
+  status       ApplicationStatus  @default(PENDING)
+  appliedAt DateTime @default(now())
 }
 
 model ProjectTask {
@@ -254,36 +286,6 @@ model TaskAssignment {
   assignedAt DateTime @default(now())
 
   task ProjectTask @relation(fields: [taskId], references: [task_id])
-}
-
-enum ApplicantType {
-  FREELANCER
-  ORGANIZATION
-}
-
-enum ApplicationStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-}
-
-model ProjectApplication {
-  id String @id @default(uuid())
-
-  projectId String
-  project   Project @relation(fields: [projectId], references: [project_id])
-
-  freelancerId String?
-  freelancer   User? @relation("FreelancerApplications", fields: [freelancerId], references: [id])
-
-  orgId String?
-  organization Organization? @relation(fields: [orgId], references: [org_id])
-  applicantType ApplicantType
-
-  coverLetter String? @db.Text
-  proposedPrice Float
-  status       ApplicationStatus  @default(PENDING)
-  appliedAt DateTime @default(now())
 }
 
 model TaskApplication {
@@ -350,4 +352,49 @@ model Feedback {
   message String @db.Text
 
   createdAt DateTime @default(now())
+}
+
+model rating {
+  id String @id @default(uuid())
+
+  raterId String
+  rater   User @relation("Rater" , fields: [raterId], references: [id])
+
+  rateeId String
+  ratee   User @relation("Ratee" , fields: [rateeId], references: [id])
+
+  score Int
+  comment String? @db.Text
+
+  createdAt DateTime @default(now())
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  content        String
+  senderId       String
+  conversationId String
+  createdAt      DateTime @default(now())
+
+  sender        User         @relation(fields: [senderId], references: [id])
+  conversation  Conversation @relation(fields: [conversationId], references: [id])
+}
+
+model Conversation {
+  id         String   @id @default(uuid())
+  projectId  String
+  createdAt  DateTime @default(now())
+
+  project    Project  @relation(fields: [projectId], references: [project_id])
+  messages   Message[]
+  members    ConversationMember[]
+}
+
+model ConversationMember {
+  id             String @id @default(uuid())
+  conversationId String
+  userId         String
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
 }

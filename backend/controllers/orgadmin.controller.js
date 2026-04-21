@@ -11,3 +11,15 @@ export const overviewStats = async (req, res) => {
         res.status(400).json({ message: "Internal server error" })
     }
 }
+
+export const getProjectDetail = async (req, res) => {
+    try {
+        const { projectId } = req.params;
+        const result = await orgAdminService.getProjectDetail(req.user,projectId);
+        console.log("result: ", result);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Error fetching project detail:", error);
+        res.status(400).json({ message: "Internal server error" });
+    }
+}

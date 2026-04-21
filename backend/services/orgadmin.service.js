@@ -114,3 +114,66 @@ export const getOverviewStats = async (data) => {
 
 
 }
+
+export const getProjectDetail = async (user, projectId) => {
+
+    const projectAssign = await prisma.project.findUnique({
+        where: {
+            project_id: projectId,
+        },
+        select: {
+            assignedToId: true,
+        }
+    })
+
+    if (!projectAssign || projectAssign.assignedToId !== user.id) {
+        throw new Error("Project not found or access denied");
+    }
+
+    const project = await prisma.project.findUnique({
+        where: {
+            project_id: projectId,
+        },
+        select: {
+            project_id: true,
+            title: true,
+            shortDesc: true,
+            description: true,
+            projectType: true,
+            visibility: true,
+            experienceLevel: true,
+            minBudget: true,
+            maxBudget: true,
+            finalPrice: true,
+            deadline: true,
+            skills: true,
+            industry: true,
+            files: true,
+            clientId: true,
+            status: true,
+            assignedType: true,
+            assignedAt: true,
+            assignedToId: true,
+            createdAt: true,
+            progress: true,
+            review: true,
+            startDate: true,
+            completionDate: true,
+            tasks: {
+                select: {
+                    task_id: true,
+                    title: true,
+                    description: true,
+                    progress: true,
+                    review: true,
+                    status: true,
+                    createdAt: true,
+                    
+
+                }
+            }
+        }
+    })
+
+    return project;
+}

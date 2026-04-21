@@ -3,9 +3,11 @@ import { prisma } from "../config/db.ts";
 export const getProjectDetails = async (projectId) => {
     const project = await prisma.project.findUnique({
         where: { 
-            project_id: projectId 
+            project_id: projectId, 
+            status: "OPEN"
         },
         select: {
+            project_id: true,
             title: true,
             description: true,
             projectType: true,
@@ -37,8 +39,55 @@ export const getProjectDetails = async (projectId) => {
     });
 
     if (!project) {
-        throw new Error("Project not found");
+        return null;
     }
 
-    return project;
+    const totalProjects = await prisma.project.count({
+        where: {
+            clientId: project.client.client_id,
+        }
+    })
+
+    return {project, totalProjects};
+}
+
+export const getAllProjects = async () => {
+    const projects = await prisma.project.findMany({
+        where:{
+            status: "OPEN"
+        },
+        select: {
+            project_id: true,
+            title: true,
+            shortDesc: true,
+            projectType: true,
+            skills: true,
+            industry: true,
+            visibility: true,
+            minBudget: true,
+            maxBudget: true,
+            createdAt: true,
+            client: {
+                select: {
+                    client_id: true,
+                    client_dp_url: true,
+                    org_name: true,
+                }
+            },
+        }
+    })
+
+    return projects;
+}
+
+export const getClientDetails = async (clientId) => {
+
+}
+
+export const getOrgDetails = async (orgId) => {
+
+}
+
+export const getFreelancerDetails = async (freelancerId) => {
+
 }

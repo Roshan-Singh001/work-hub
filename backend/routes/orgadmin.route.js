@@ -7,6 +7,7 @@ const orgAdminRouter = express.Router();
 orgAdminRouter.use(authenticate);
 orgAdminRouter.use(authorizeOrgAdmin);
 
-orgAdminRouter.get("/overview", orgAdminController.overviewStats)
+orgAdminRouter.get("/overview", orgAdminController.overviewStats);
+orgAdminRouter.get("/project/detail/:projectId", orgAdminController.getProjectDetail);
 
 export default orgAdminRouter;

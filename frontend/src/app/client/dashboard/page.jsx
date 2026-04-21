@@ -36,6 +36,7 @@ import {
     Inbox,
     Milestone,
     CircleDot,
+    Timer,
 } from "lucide-react"
 
 export default function ClientDashboard() {
@@ -44,22 +45,22 @@ export default function ClientDashboard() {
 
     const [dashboardData, setDashboardData] = useState(null);
     const [activeProjects, setActiveProjects] = useState([]);
-    const [upcomingMilestones, setUpcomingMilestones] = useState([]);
-    const [recentMessages, setRecentMessages] = useState([]);
+    // const [upcomingMilestones, setUpcomingMilestones] = useState([]);
+    // const [recentMessages, setRecentMessages] = useState([]);
 
     useEffect(() => {
         if (loading) return;
         async function fetchDashboard() {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/client/dashboard/`, {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/client/overview`, {
                     method: "GET",
                     credentials: "include",
                 });
                 const data = await res.json();
-                setDashboardData(data);
-                setActiveProjects(data.activeProjects || []);
-                setUpcomingMilestones(data.upcomingMilestones || []);
-                setRecentMessages(data.recentMessages || []);
+                setDashboardData(data.stat);
+                setActiveProjects(data.projects || []);
+                // setUpcomingMilestones(data.upcomingMilestones || []);
+                // setRecentMessages(data.recentMessages || []);
             } catch (error) {
                 console.error("Error fetching dashboard: ", error);
                 toast.error("Failed to load dashboard. Please try again later.");
@@ -68,7 +69,7 @@ export default function ClientDashboard() {
         fetchDashboard();
     }, [loading]);
 
-    const totalUnread = recentMessages.reduce((sum, m) => sum + (m.unread || 0), 0);
+    // const totalUnread = recentMessages.reduce((sum, m) => sum + (m.unread || 0), 0);
 
     return (
         <div className="min-h-screen bg-background">
@@ -105,19 +106,19 @@ export default function ClientDashboard() {
                     <StatCard
                         icon={FolderOpen}
                         label="Active Projects"
-                        value={dashboardData?.totalActiveProjects ?? "0"}
+                        value={dashboardData?.activeProjects ?? "0"}
                         sub="Currently in progress"
                     />
                     <StatCard
                         icon={CheckCircle}
                         label="Completed Projects"
-                        value={dashboardData?.totalCompletedProjects ?? "0"}
+                        value={dashboardData?.completedProjects ?? "0"}
                         sub="Successfully delivered"
                     />
                     <StatCard
-                        icon={CreditCard}
-                        label="Pending Payments"
-                        value={dashboardData?.pendingPayments ?? "0"}
+                        icon={Timer}
+                        label="Pending Applications"
+                        value={dashboardData?.pendingApplications ?? "0"}
                         sub="Awaiting your action"
                         highlight
                     />
@@ -128,7 +129,7 @@ export default function ClientDashboard() {
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div>
-                                <CardTitle className="text-base">Active Projects Snapshot</CardTitle>
+                                <CardTitle className="text-base">Projects Snapshot</CardTitle>
                                 <CardDescription className="text-xs mt-0.5">
                                     Progress and status of your ongoing work
                                 </CardDescription>
@@ -137,7 +138,7 @@ export default function ClientDashboard() {
                                 variant="ghost"
                                 size="sm"
                                 className="text-xs h-7"
-                                onClick={() => router.push("/client/projects")}
+                                onClick={() => router.push("/client/dashboard/project/active")}
                             >
                                 View all
                             </Button>
@@ -156,9 +157,9 @@ export default function ClientDashboard() {
                         <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-0">
                             {activeProjects.slice(0, 5).map((project) => (
                                 <ProjectCard
-                                    key={project.id}
+                                    key={project?.project_id}
                                     project={project}
-                                    onView={() => router.push(`/client/projects/${project.id}`)}
+                                    onView={() => router.push(`/client/dashboard/project/detail/${project?.project_id}`)}
                                 />
                             ))}
                         </CardContent>
@@ -166,9 +167,9 @@ export default function ClientDashboard() {
                 </Card>
 
                 {/* ── Bottom Section: Milestones + Messages ── */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-                    {/* Upcoming Deadlines / Milestones */}
+                   
                     <Card>
                         <CardHeader>
                             <div className="flex items-center justify-between">
@@ -252,7 +253,6 @@ export default function ClientDashboard() {
                         )}
                     </Card>
 
-                    {/* Recent Messages */}
                     <Card>
                         <CardHeader>
                             <div className="flex items-center justify-between">
@@ -320,14 +320,12 @@ export default function ClientDashboard() {
                             </CardContent>
                         )}
                     </Card>
-                </div>
+                </div> */}
 
             </div>
         </div>
     );
 }
-
-/* ── Sub-components ── */
 
 function StatCard({ icon: Icon, label, value, sub, highlight }) {
     return (
@@ -350,9 +348,10 @@ function StatCard({ icon: Icon, label, value, sub, highlight }) {
 
 function ProjectCard({ project, onView }) {
     const statusConfig = {
-        "In Progress": { variant: "default", dot: "bg-blue-500" },
-        "Review": { variant: "secondary", dot: "bg-amber-500" },
-        "Completed": { variant: "outline", dot: "bg-green-500" },
+        "IN_PROGRESS": { variant: "default", dot: "bg-blue-500" },
+        "OPEN": { variant: "secondary", dot: "bg-amber-500" },
+        "COMPLETED": { variant: "outline", dot: "bg-green-500" },
+        "DELAYED": { variant: "destructive", dot: "bg-red-500" }
     };
     const config = statusConfig[project.status] || { variant: "outline", dot: "bg-muted-foreground" };
     const deadline = new Date(project.deadline);

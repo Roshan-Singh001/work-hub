@@ -3,6 +3,8 @@
 import * as React from "react"
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext"
+import Link from "next/link";
+import Image from "next/image";
 import {
   House,
   Briefcase,
@@ -28,7 +30,8 @@ import {
   AlertTriangle,
   Lightbulb,
 } from "lucide-react"
-
+// import WorkHubLogo from "../../../../public/WorkHubLogo.png"
+import WorkHubLogo from "../../../../public/WorkHubLogo.png"
 import {
   Sidebar,
   SidebarContent,
@@ -249,8 +252,8 @@ export function OrgSidebar({ ...props }) {
         <SidebarHeader>
           <SidebarMenu>
             <SidebarMenuItem className="flex gap-3 items-center">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground shrink-0">
-                <img src="/favicon.ico" alt={user.orgName} className="h-4 w-4" />
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg  shrink-0">
+                <Image src={WorkHubLogo} alt="Work Hub" width={32} height={32} />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
                 <span className="truncate font-medium">{user.orgName}</span>
@@ -361,9 +364,9 @@ function NavItem({ item, accessible, isActive, pathname, orgStatus }) {
           isActive={pathname === item.url}
         >
           {item.icon && <item.icon />}
-          <a href={item.url}>
+          <Link href={item.url}>
             <span>{item.title}</span>
-          </a>
+          </Link>
         </SidebarMenuButton>
       </SidebarMenuItem>
     );
@@ -417,9 +420,9 @@ function NavItem({ item, accessible, isActive, pathname, orgStatus }) {
                     asChild
                     isActive={pathname === subItem.url}
                   >
-                    <a href={subItem.url}>
+                    <Link href={subItem.url}>
                       <span>{subItem.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuSubButton>
                 </SidebarMenuSubItem>
               );

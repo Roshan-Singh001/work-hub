@@ -252,7 +252,7 @@ export function OrgSidebar({ ...props }) {
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight min-w-0">
                 <span className="truncate font-medium">{user.orgName}</span>
-                <span className="truncate text-xs">Member</span>
+                <span className="truncate text-xs">Manager</span>
                 
               </div>
             </SidebarMenuItem>

@@ -96,7 +96,7 @@ export const register = async (req) => {
 
     return { message: "Your are registered successfully, Kindly wait for approval from admin, You can view the status in your dashboard." }
   }
-  else if(data.role == 'client'){
+  else if (data.role == 'client') {
     const user_id = 'user_' + uuidv4().replaceAll("-", "_");
 
     await prisma.user.create({
@@ -125,56 +125,76 @@ export const register = async (req) => {
   }
 }
 
-export const login = async (data) =>{
+export const login = async (data) => {
   console.log("Login request data: ", data);
-  const { role, email, password} = data;
+  const { role, email, password } = data;
   var user;
+  let mem;
 
   if (role == 'Orgs') {
     user = await prisma.user.findUnique({
-      where:{
+      where: {
         email: email,
       }
     })
+
+    if (user && (user.role == 'ORG_Member')) {
+      mem = await prisma.org_member.findUnique({
+        where: {
+          userId: user.id,
+        }
+      })
+
+      if (mem) {
+        const isPassValid = await bcrypt.compare(password, user.password);
+        if (!isPassValid) {
+          throw new Error("Invalid Password");
+        }
+
+        const token = generateToken(user.id, role == 'Admin' ? 'Admin' : user.role);
+
+        return { message: "Login Successful", id: user.id, token: token, role: user.role, orgId: mem.organizationId, memRole: mem.role, memStatus: mem.status, memTitle: mem.jobTitle }
+      }
+    }
   }
-  else if(role == 'Admin'){
+  else if (role == 'Admin') {
     user = await prisma.admin.findUnique({
-      where:{
+      where: {
         email: email,
       }
     })
   }
-  else{
+  else {
     user = await prisma.user.findUnique({
-      where:{
+      where: {
         email: email,
         role: role
       }
     })
   }
 
-  console.log("user: ",user);
+  console.log("user: ", user);
 
-  if (!user ) {
+  if (!user) {
     throw new Error("Invalid email or role");
   }
 
   const isPassValid = await bcrypt.compare(password, user.password);
-  if(!isPassValid){
+  if (!isPassValid) {
     throw new Error("Invalid Password");
   }
 
-  const token = generateToken(user.id, role == 'Admin' ? 'Admin': user.role);
+  const token = generateToken(user.id, role == 'Admin' ? 'Admin' : user.role);
 
-  return {message: "Login Successful", id: user.id, token: token, role: role == 'Admin' ? "Admin" : user.role}
-  
+  return { message: "Login Successful", id: user.id, token: token, role: role == 'Admin' ? "Admin" : user.role }
+
 }
 
-export const me = async (data) =>{
+export const me = async (data) => {
   const token = data.cookies.token;
   console.log("Me request data: ", data.cookies);
 
-  if(!token){
+  if (!token) {
     throw new Error("Not authenticated");
   }
 
@@ -186,62 +206,73 @@ export const me = async (data) =>{
 
   if (decoded.role == "Admin") {
     const admin = await prisma.admin.findUnique({
-      where: { id: decoded.id}
+      where: { id: decoded.id }
     })
 
     if (!admin) {
       throw new Error("Admin not found");
     }
     return {
-      message: "Authenticated Successfully", 
+      message: "Authenticated Successfully",
       user: {
-        id: decoded.id, 
-        name: admin.name, 
-        email: admin.email, 
+        id: decoded.id,
+        name: admin.name,
+        email: admin.email,
         role: decoded.role
-      }}
+      }
+    }
   }
   else if (decoded.role == "ORG_Owner" || decoded.role == "ORG_Member") {
     const user = await prisma.user.findUnique({
-      where: { id: decoded.id}
+      where: { id: decoded.id }
     })
 
     const org = await prisma.organization.findUnique({
-      where: { org_id: user.organizationId}
+      where: { org_id: user.organizationId }
+    })
+
+    const mem = await prisma.org_member.findUnique({
+      where: {
+        userId: decoded.id,
+        organizationId: user.organizationId
+      }
     })
 
     if (!user || !org) {
       throw new Error("User or Organization not found");
     }
     return {
-      message: "Authenticated Successfully", 
+      message: "Authenticated Successfully",
       user: {
-        id: decoded.id, 
-        name: user.first_name + " " + user.last_name, 
-        email: user.email, 
-        role: decoded.role, 
-        orgName: org.org_name, 
+        id: decoded.id,
+        name: user.first_name + " " + user.last_name,
+        email: user.email,
+        role: decoded.role,
+        orgName: org.org_name,
         orgId: org.org_id,
         status: user.status,
+        memRole: mem.role,
+        memStatus: mem.status,
       }
     }
 
   }
-  else if(decoded.role == "Freelancer" || decoded.role == "Client"){
+  else if (decoded.role == "Freelancer" || decoded.role == "Client") {
     const user = await prisma.user.findUnique({
-      where: { id: decoded.id}
+      where: { id: decoded.id }
     })
 
     return {
-      message: "Authenticated Successfully", 
+      message: "Authenticated Successfully",
       user: {
-        id: decoded.id, 
+        id: decoded.id,
         name: user.first_name + " " + user.last_name,
         email: user.email,
         role: decoded.role,
         status: user.status,
-      }}
+      }
+    }
   }
 
-  
+
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
@@ -36,11 +36,6 @@ import {
   Lock,
 
 } from "lucide-react";
-
-const MOCK_AUTH = {
-  isLoggedIn: true,
-  userType: "freelancer", 
-};
 
 // Mock Data
 const JOBS = [
@@ -196,13 +191,34 @@ const ORG_LOGO_COLORS = [
 
 export default function FindWork() {
   const { userData, isLoggedIn } = useAuth();
-  const auth = MOCK_AUTH;
 
   const [search, setSearch] = useState("");
   const [targetFilter, setTargetFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [selectedJob, setSelectedJob] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  useEffect(() => {
+    async function fetchData(){
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fetch/projects/all`, {
+          method: "GET"
+        });
+
+        const data = await res.json();
+
+        console.log("Fetched projects:", data);
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+        
+      }
+
+    }
+    
+  
+
+  }, [])
+  
 
   const visibleJobs = useMemo(() => {
     return JOBS.filter((job) => {
@@ -474,13 +490,13 @@ function JobCard({ job, onViewDetails, auth, index }) {
               {job.postedBy} · {job.postedDaysAgo}d ago
             </p>
           </div>
-          <Badge
+          {/* <Badge
             className={`text-[10px] font-mono shrink-0 border rounded-none px-2 py-0.5 ${
               CATEGORY_COLORS[job.category]
             } border-transparent`}
           >
             {job.category}
-          </Badge>
+          </Badge> */}
         </div>
 
         {/* Description */}
@@ -491,6 +507,17 @@ function JobCard({ job, onViewDetails, auth, index }) {
         {/* Skills */}
         <div className="flex flex-wrap gap-1.5">
           {job.skills.map((skill) => (
+            <span
+              key={skill}
+              className="text-[11px] font-mono px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-sm"
+            >
+              {skill}
+            </span>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-1.5">
+          {job?.industry.map((skill) => (
             <span
               key={skill}
               className="text-[11px] font-mono px-2 py-0.5 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-sm"
